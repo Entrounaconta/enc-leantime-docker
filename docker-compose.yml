@@ -53,6 +53,21 @@ services:
     user: root
     profiles: [ "helper" ]
 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: leantime-cloudflared
+    restart: unless-stopped
+    depends_on:
+      - leantime
+    command:
+      - tunnel
+      - --no-autoupdate
+      - run
+      - --token
+      - ${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - leantime-net
+
 volumes:
   db_data:
   userfiles:                                               # New volume for public files
