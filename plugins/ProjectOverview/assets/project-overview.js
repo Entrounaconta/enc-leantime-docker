@@ -1,0 +1,1311 @@
+/**
+ * Project Overview bundle entrypoint.
+ *
+ * Subsystems that run on the project-overview page, in roughly the order they
+ * appear in this file:
+ *   - View tabs widget (hidden in the redesigned UI, driven by sidebar clicks)
+ *     including URL pushState, unsaved-changes tracking, and lazy-loading the
+ *     active panel's table on activation.
+ *   - Ticket-row inline edits (status, priority, due date, assignee, tags,
+ *     hours, milestone) that PATCH the API and animate save success/error.
+ *   - Lazy-load sentinel for paginated row insertion.
+ *
+ * Filter UI (pill row + select2 wiring + dropdown enhancements + dirty
+ * tracking) has been extracted to `./filters.js`; sidebar view navigation
+ * lives in `./sidebar.js`. The imports below are the only cross-module touch
+ * points. New subsystems should also be extracted to their own module under
+ * `assets/` and wired in from here rather than appended to this file.
+ */
+
+import 'select2';
+import 'select2/dist/css/select2.css';
+import 'flatpickr/dist/flatpickr.min.css';
+import TomSelect from 'tom-select';
+import 'tom-select/dist/css/tom-select.bootstrap5.css';
+import './project-overview.css';
+import {
+  initSidebarViewNavigation,
+  applySidebarActiveState,
+} from './sidebar.js';
+import {
+  initFiltersToggle,
+  initProjectOverviewFilters,
+  installFilterDropdownEnhancements,
+  installFilterTabNavigation,
+  installFilterReset,
+  captureFormState,
+  restoreFormState,
+  shouldShowSaveChangesBtn,
+  shouldShowResetChangesBtn,
+  updateSaveBtnVisibility,
+  updateResetBtnVisibility,
+  seedNewViewCacheFromStorage,
+  clearNewViewFiltersStorage,
+} from './filters.js';
+
+$(document).ready(function () {
+  window.frontendDateFormat = $(document).find('#frontendDateFormat').val();
+  // Seed before the first htmx:afterSettle fires for #filtersContainer, so a
+  // persisted "+ new view" draft is already in _viewCachedFormData by the
+  // time the existing restore-from-cache code runs.
+  seedNewViewCacheFromStorage();
+  initFiltersToggle();
+  initProjectOverviewFilters({ refreshViewTable, toggleUnsavedIndicator });
+  initProjectOverviewTable();
+  initScrollToTopButton();
+  initSaveChangesSubmit();
+  installFilterReset({ toggleUnsavedIndicator });
+  initSidebarViewNavigation();
+  initNewViewTipsDismiss();
+
+  // begin HTMX swap events
+  document.body.addEventListener('htmx:beforeSettle', (e) => {
+    e.detail.target.style.visibility = 'hidden';
+  });
+  document.addEventListener('htmx:afterSettle', function (e) {
+    e.detail.target.style.visibility = '';
+    if (e.target.id === 'filtersContainer') {
+      initProjectOverviewFilters({ refreshViewTable, toggleUnsavedIndicator });
+
+      // Restore cached unsaved form state if returning to a dirty view
+      const activeViewId = document.getElementById('selectedViewId');
+      if (
+        activeViewId &&
+        window._viewCachedFormData &&
+        window._viewCachedFormData[activeViewId.value]
+      ) {
+        restoreFormState(window._viewCachedFormData[activeViewId.value]);
+      }
+
+      // Restore save / reset button visibility after HTMX replaces the
+      // filters DOM
+      const saveBtn = document.querySelector('.save-changes-btn');
+      if (saveBtn && activeViewId) {
+        saveBtn.style.display = shouldShowSaveChangesBtn(activeViewId.value)
+          ? ''
+          : 'none';
+      }
+      const resetBtn = document.querySelector('.reset-changes-btn');
+      if (resetBtn && activeViewId) {
+        resetBtn.style.display = shouldShowResetChangesBtn(activeViewId.value)
+          ? ''
+          : 'none';
+      }
+
+      // Reset action: after the canonical filters have been swapped in,
+      // refresh the table so it reflects the restored configuration. The
+      // lazy-load fallback below would skip this case because the panel
+      // already contains a rendered table.
+      const resetPending = window._povResetPendingViewId;
+      if (resetPending && activeViewId && activeViewId.value === resetPending) {
+        window._povResetPendingViewId = null;
+        const form = document.getElementById('filtersForm');
+        if (form) {
+          refreshViewTable(form);
+        }
+      }
+
+      // Lazy-load: if the active view panel has a placeholder, trigger a
+      // table refresh. The "__new" tab is a special case — its panel renders
+      // the help banner only on initial paint, so we also kick off a refresh
+      // when it's active and no table is mounted yet. The refresh response
+      // includes the help banner above the table (see the partial), so help
+      // remains visible and the preview slots in alongside it.
+      if (activeViewId && activeViewId.value) {
+        const activePanel = document.getElementById(
+          'view-' + activeViewId.value
+        );
+        const isNewTabWithoutPreview =
+          activeViewId.value === '__new' &&
+          activePanel &&
+          !activePanel.querySelector('table');
+        if (
+          activePanel &&
+          (activePanel.querySelector('.view-lazy-load') ||
+            isNewTabWithoutPreview)
+        ) {
+          const form = document.getElementById('filtersForm');
+          if (form) {
+            refreshViewTable(form);
+          }
+        }
+      }
+    }
+  });
+  // end HTMX swap events
+});
+
+/**
+ * Show the floating "scroll to top" button after the user scrolls down enough,
+ * and smoothly return them to the top on click.
+ */
+function initScrollToTopButton() {
+  const btn = document.getElementById('scrollToTopBtn');
+  if (!btn) return;
+
+  const SHOW_AFTER_PX = 320;
+  let raf = 0;
+
+  function update() {
+    raf = 0;
+    const shouldShow = window.scrollY > SHOW_AFTER_PX;
+    if (shouldShow && btn.hasAttribute('hidden')) {
+      btn.removeAttribute('hidden');
+      // Force a paint so the transition runs from opacity:0 to 1
+      requestAnimationFrame(() => btn.classList.add('is-visible'));
+    } else if (!shouldShow && !btn.hasAttribute('hidden')) {
+      btn.classList.remove('is-visible');
+      // Wait for the fade-out before removing from layout
+      setTimeout(() => {
+        if (window.scrollY <= SHOW_AFTER_PX) btn.setAttribute('hidden', '');
+      }, 200);
+    }
+  }
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (raf) return;
+      raf = requestAnimationFrame(update);
+    },
+    { passive: true }
+  );
+
+  btn.addEventListener('click', () => {
+    const reduceMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+  });
+
+  update();
+}
+
+/**
+ * On submit of the filter form via the "Save changes" button, prompt for a name
+ * if the active tab is the synthetic __new tab. Cancel = abort submit. Otherwise
+ * the form submits normally (overwriteView=1 on the button overwrites the active
+ * view, or the saveView handler creates a new view when view=__new).
+ */
+function initSaveChangesSubmit() {
+  document.addEventListener('submit', function (e) {
+    const form = e.target;
+    if (!form || form.id !== 'filtersForm') return;
+
+    // The filters form has exactly one submit affordance now (#saveChangesBtn),
+    // so any submit it fires is a "Save changes". Other actions (rename, share,
+    // delete, pin, copy) live in the separate context-menu form.
+
+    // The active view: the form's hidden `view` field is rendered by the
+    // filters template for the currently-loaded view, so it's the source of
+    // truth. The page-level #selectedViewId is updated by the tab-activate
+    // handler in JS but only after a tab click; on initial empty-state page
+    // load (where no tab activate fires) the form is the only reliable source.
+    const viewField = form.querySelector('input[name="view"]');
+    const activeViewIdInput = document.getElementById('selectedViewId');
+    const activeViewId =
+      (viewField && viewField.value) ||
+      (activeViewIdInput && activeViewIdInput.value) ||
+      null;
+
+    if (activeViewId !== '__new') return;
+
+    // Defensive: ensure the field is `__new` (already is in normal flow, but
+    // protects against any stale state).
+    if (viewField) viewField.value = '__new';
+
+    const promptText =
+      (window.projectOverviewI18n &&
+        window.projectOverviewI18n.newViewPromptName) ||
+      'Name your new view';
+    const name = window.prompt(promptText);
+    if (name === null || name.trim() === '') {
+      e.preventDefault();
+      return;
+    }
+    const nameField = form.querySelector('#newViewName');
+    if (nameField) nameField.value = name.trim();
+    // The draft is about to become a real saved view; drop the persisted
+    // copy so the next visit to "+ new view" starts pristine.
+    clearNewViewFiltersStorage();
+  });
+}
+
+/**
+ * Counterpart for the (CSS-hidden) horizontal tab strip — separate from the
+ * sidebar scroll helper that lives in `./sidebar.js`. Used on init so a page
+ * loaded with `?view=<id>` pointing at a tab past the fold of the scrollable
+ * strip isn't hidden behind the sticky "+ New view" pin — the activate handler
+ * already scrolls on user-driven tab switches.
+ */
+function scrollActiveTabIntoView() {
+  const active = document.querySelector(
+    '#projectOverviewTabs .ui-tabs-nav .ui-state-active'
+  );
+  if (!active) return;
+  active.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+}
+
+/**
+ * Dismissal for the onboarding tips banner that lives at the top of the
+ * `__new` view panel. The banner is re-rendered server-side on every refresh
+ * of the panel (it's bundled into the table partial when viewId === '__new'),
+ * so a one-shot `display: none` would come right back. Instead we persist a
+ * flag in localStorage and apply a body-level class on every page load. CSS
+ * keys off the class to hide the banner.
+ *
+ * Delegated on document so it survives every panel innerHTML swap.
+ */
+const NEW_VIEW_TIPS_DISMISSED_KEY = 'projectOverview.newViewTipsDismissed';
+
+function initNewViewTipsDismiss() {
+  if (localStorage.getItem(NEW_VIEW_TIPS_DISMISSED_KEY) === '1') {
+    document.body.classList.add('projectoverview-new-view-tips-dismissed');
+  }
+  document.body.addEventListener('click', function (e) {
+    if (!e.target.closest('.new-view-tips-dismiss')) return;
+    localStorage.setItem(NEW_VIEW_TIPS_DISMISSED_KEY, '1');
+    document.body.classList.add('projectoverview-new-view-tips-dismissed');
+  });
+}
+
+function initProjectOverviewTable() {
+  // Init tags select for each row.
+  initTagsSelects();
+
+  installFilterTabNavigation();
+  installFilterDropdownEnhancements();
+
+  // Wire the lazy-load buttons on the initially-rendered active panel.
+  // (Inactive tabs hold a placeholder until activated, then refreshViewTable
+  // re-attaches the buttons for them.)
+  document.querySelectorAll('[id^="view-"]').forEach(function (panel) {
+    if (panel.querySelector('.lazy-row-sentinel')) {
+      attachLazyLoad(panel);
+    }
+    if (panel.querySelector('.result-count')) {
+      updateResultCount(panel);
+    }
+  });
+
+  const contextMenu = $('#view-context-menu');
+
+  // Start sorting
+  // Status change
+  $(document).on('click', '.dropdown-item .table-button.status', function () {
+    const [ticketId, newStatus, className, name] = $(this)
+      .data('args')
+      .split(',');
+    changeStatus(ticketId, newStatus, className, name);
+  });
+
+  // Priority change
+  $(document).on('click', '.dropdown-item .table-button.priority', function () {
+    const [ticketId, newPriority, label] = $(this).data('args').split(',');
+    changePriority(ticketId, newPriority, label);
+  });
+
+  // begin sorting
+  document.addEventListener('click', function (e) {
+    const th = e.target.closest('[id^=sort_]');
+    if (th) {
+      changeSortBy(th.id.replace('sort_', ''), th);
+    }
+  });
+
+  $(document).on('change', '[id^=due-date-]', function () {
+    const ticketId = $(this).data('ticketid');
+    changeDueDate(event, ticketId, $(this).val());
+  });
+
+  $(document).on('change', '[id^=assigned-user-]', function () {
+    const idArg = this.id.split('-')[2];
+    changeAssignedUser(event, idArg, this.value);
+  });
+
+  $(document).on('change', '[id^=plan-hours-]', function () {
+    const idArg = this.id.split('-')[2];
+    changePlanHours(event, idArg, this.value);
+  });
+
+  $(document).on('change', '[id^=remaining-hours-]', function () {
+    const idArg = this.id.split('-')[2];
+    changeHoursRemaining(event, idArg, this.value);
+  });
+
+  $(document).on('change', '[id^=milestone-select-]', function () {
+    const idArg = this.id.split('-')[2];
+    changeMilestone(event, idArg, this.value);
+  });
+  // end sorting
+
+  // Init click event on context menu
+  $(document).on('click', 'span.tab-context-menu', ({ target }) => {
+    const currentName = $(target).siblings('.tab-link').first().text().trim();
+    const triggerRect = target.getBoundingClientRect();
+    const liRect = target.parentElement.getBoundingClientRect();
+    const tab = $(target).parent();
+    const viewId = tab.data('target');
+    // Transient previews get Pin / Save-as-copy; pinned subscriptions get the
+    // owner-style actions (rename, duplicate, delete) minus Copy link; owned
+    // views get everything.
+    const isTransient = tab.data('is-transient-subscription') === true;
+    const isStoredSubscription = tab.data('is-subscription') === true;
+    const mode = isTransient
+      ? 'transient'
+      : isStoredSubscription
+        ? 'pinned'
+        : 'owned';
+    const sharedViewId = tab.data('shared-view-id') || '';
+    $('.settings-for-target').text(viewId);
+    contextMenu
+      .attr('data-mode', mode)
+      .css({
+        left: `${liRect.left}px`,
+        top: `${triggerRect.bottom + 12}px`,
+      })
+      .addClass('shown')
+      .find('#contextMenuTitle')
+      .text(currentName)
+      .end()
+      .find('input[name="viewName"]')
+      .val(currentName)
+      .end()
+      .find('input[name="view"]')
+      .val(viewId)
+      .end()
+      .find('input[name="sharedViewId"]')
+      .val(sharedViewId);
+
+    // Focus the rename field whenever it's visible — that's both owned and
+    // pinned-subscription views (transient previews don't expose rename).
+    if (mode !== 'transient') {
+      requestAnimationFrame(() => {
+        contextMenu.find('input[name="viewName"]').focus();
+      });
+    }
+  });
+
+  // Close context menu when clicked outside.
+  $(document).on('click', function (event) {
+    if (
+      !$(event.target).closest('#view-context-menu').length &&
+      !$(event.target).closest('span.tab-context-menu').length
+    ) {
+      contextMenu.removeClass('shown');
+    }
+  });
+  // Close .tab-context-menu when clicking on any other tab.
+  $(document).on('click', '#projectOverviewTabs > ul > li', ({ target }) => {
+    if (!$(target).closest('span.tab-context-menu').length) {
+      contextMenu.removeClass('shown');
+    }
+  });
+  // Check if URL has a view parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlViewId = urlParams.get('view');
+  let selectedViewId = $(document).find('#selectedViewId').val();
+
+  // If URL has a view parameter and it exists in the tabs, use that
+  if (urlViewId && window.jQuery(`li[data-target='${urlViewId}']`).length > 0) {
+    selectedViewId = urlViewId;
+    window.jQuery('#selectedViewId').val(urlViewId);
+  }
+
+  // Use window.jQuery to access the globally loaded jQuery UI
+  const $projectOverviewTabs = window.jQuery('#projectOverviewTabs');
+
+  // Init view tabs with sorting
+  $projectOverviewTabs
+    .tabs({
+      beforeActivate: function (event, ui) {
+        // Cache unsaved form state before switching away
+        const currentViewId = window.jQuery('#selectedViewId').val();
+        if (
+          currentViewId &&
+          window._viewsWithUnsavedChanges &&
+          window._viewsWithUnsavedChanges[currentViewId]
+        ) {
+          const form = document.getElementById('filtersForm');
+          if (form) {
+            if (!window._viewCachedFormData) window._viewCachedFormData = {};
+            window._viewCachedFormData[currentViewId] = captureFormState(form);
+          }
+        }
+      },
+      activate: function (event, ui) {
+        window.jQuery('#edit-time-log-modal').removeClass('shown');
+
+        if (ui.newTab && ui.newTab[0]) {
+          ui.newTab[0].scrollIntoView({
+            inline: 'nearest',
+            block: 'nearest',
+            behavior: 'smooth',
+          });
+        }
+
+        // Update URL when tab is activated
+        const viewId = ui.newPanel.attr('id').replace('view-', '');
+
+        // Sync save / reset buttons and unsaved banner with the newly active view
+        const saveBtn = document.querySelector('.save-changes-btn');
+        if (saveBtn) {
+          saveBtn.style.display = shouldShowSaveChangesBtn(viewId)
+            ? ''
+            : 'none';
+        }
+        const resetBtn = document.querySelector('.reset-changes-btn');
+        if (resetBtn) {
+          resetBtn.style.display = shouldShowResetChangesBtn(viewId)
+            ? ''
+            : 'none';
+        }
+        const url = new URL(window.location.href);
+        url.searchParams.set('view', viewId);
+        window.history.pushState({ view: viewId }, '', url);
+
+        // Update hidden input
+        window.jQuery('#selectedViewId').val(viewId);
+
+        // Keep the sidebar in sync (covers popstate and programmatic activation
+        // paths, since sidebar clicks also re-apply explicitly).
+        applySidebarActiveState();
+      },
+      active: window.jQuery(`li[data-target='${selectedViewId}']`).index(),
+    })
+    .find('ul')
+    .sortable({
+      // The synthetic "new" tab is pinned rightmost via CSS (order: 999) and is
+      // also excluded from the saved order payload below. Excluding it from the
+      // sortable item set prevents the user from grabbing it.
+      items: 'li:not([data-target="__new"])',
+      axis: 'x',
+      tolerance: 'pointer',
+      delay: 150,
+      distance: 5,
+      update: function (event, ui) {
+        var newOrder = window
+          .jQuery(this)
+          .sortable('toArray', { attribute: 'data-target' })
+          .filter(function (id) {
+            return id !== '__new';
+          });
+
+        // Send AJAX request to save the new order
+        window.jQuery.ajax({
+          dataType: 'json',
+          url: 'ProjectOverview/ProjectOverview/post',
+          method: 'POST',
+          data: {
+            action: 'saveTabOrder',
+            order: newOrder,
+          },
+          success: function (response) {
+            if (response.status === 'success') {
+              window.jQuery.growl({
+                message: response.message || 'Tab order saved successfully',
+              });
+            } else {
+              window.jQuery.growl({
+                message: response.message || 'Failed to save tab order',
+              });
+            }
+          },
+          error: function (xhr, status, error) {
+            window.jQuery.growl({
+              message: 'Error saving tab order: ' + error,
+            });
+          },
+        });
+      },
+    });
+
+  // Fade in after initialization
+  $projectOverviewTabs.removeClass('is-hidden');
+
+  scrollActiveTabIntoView();
+
+  // Set initial URL state
+  if (!urlViewId) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('view', selectedViewId);
+    window.history.replaceState({ view: selectedViewId }, '', url);
+  }
+
+  // Handle browser back/forward buttons
+  window.addEventListener('popstate', function (event) {
+    if (event.state && event.state.viewId) {
+      const viewIndex = window
+        .jQuery(`li[data-target='${event.state.viewId}']`)
+        .index();
+      if (viewIndex >= 0) {
+        $projectOverviewTabs.tabs('option', 'active', viewIndex);
+        window.jQuery('#selectedView').val(event.state.viewId);
+
+        // Trigger HTMX to load the filters for this view
+        const hxGetUrl = `/ProjectOverview/ProjectOverview/loadFilters/${encodeURIComponent(event.state.viewId)}`;
+        window.jQuery('#filtersContainer').attr('hx-get', hxGetUrl);
+        htmx.trigger('#filtersContainer', 'load');
+      }
+    }
+  });
+
+  // Share view: copy the canonical `?view=<id>` URL to the clipboard. Any
+  // user who opens this URL hits the server-side global view lookup and
+  // sees the view as a transient preview — no separate share token needed.
+  document.addEventListener('click', function (e) {
+    const shareBtn = e.target.closest('button.view-share');
+    if (!shareBtn) return;
+    e.preventDefault();
+
+    const viewId = document.querySelector(
+      '#view-context-menu input[name="view"]'
+    ).value;
+    if (!viewId) return;
+
+    const shareUrl =
+      window.location.origin +
+      '/ProjectOverview/ProjectOverview?view=' +
+      encodeURIComponent(viewId);
+
+    navigator.clipboard.writeText(shareUrl).then(
+      function () {
+        window.jQuery.growl({
+          message:
+            (window.projectOverviewI18n &&
+              window.projectOverviewI18n.shareLinkCopied) ||
+            'Link copied',
+        });
+      },
+      function () {
+        window.jQuery.growl({
+          message:
+            (window.projectOverviewI18n &&
+              window.projectOverviewI18n.shareLinkCopyFailed) ||
+            'Could not copy link',
+        });
+      }
+    );
+
+    document.getElementById('view-context-menu').classList.remove('shown');
+  });
+}
+
+function initSingleTagSelect(selectElement) {
+  if (!selectElement || selectElement.tomselect) return;
+
+  const allTags = window.allTags || [];
+  const ticketId = selectElement.dataset.ticketId;
+
+  try {
+    new TomSelect(selectElement, {
+      plugins: ['remove_button'],
+      maxItems: null,
+      create: true,
+      persist: false,
+      openOnFocus: false,
+      loadThrottle: 300,
+      load: function (query, callback) {
+        if (!query.length) {
+          this.close();
+          return callback();
+        }
+
+        const filtered = allTags
+          .filter((tag) => tag.toLowerCase().includes(query.toLowerCase()))
+          .slice(0, 50)
+          .map((tag) => ({ value: tag, text: tag }));
+
+        callback(filtered);
+      },
+      onChange: function (values) {
+        const tagsString = Array.isArray(values) ? values.join(',') : values;
+        changeTags({ target: selectElement }, ticketId, tagsString);
+      },
+    });
+  } catch (err) {
+    console.error(
+      '[ProjectOverview] TomSelect init failed for',
+      selectElement,
+      err
+    );
+  }
+}
+
+function initTagsSelects() {
+  document.querySelectorAll('.ticket-tags-select').forEach(initSingleTagSelect);
+}
+
+function changeStatus(ticketId, newStatusId, newClass, newLabel) {
+  if (newStatusId !== undefined && ticketId) {
+    leantime
+      .rpc('Tickets.Tickets.patchTicket', {
+        id: ticketId,
+        values: {
+          status: newStatusId,
+        },
+      })
+      .then(() => {
+        // Optimistically update the UI; patchTicket only returns a bool.
+        // Update ALL buttons with this ID (same ticket can appear in multiple views)
+        document
+          .querySelectorAll(`#status-ticket-${ticketId}`)
+          .forEach((button) => {
+            button.className = `table-button table-button-status ${newClass}`;
+            const circle = button.querySelector('.status-circle');
+            if (circle) {
+              circle.className = `status-circle ${newClass}`;
+            }
+            const label = button.querySelector('#status-label');
+            if (label) {
+              label.textContent = newLabel;
+            }
+          });
+      })
+      .catch((err) => {
+        console.error('[ProjectOverview] Failed to update status', err);
+      });
+  }
+}
+
+// change priority ajax
+function changePriority(ticketId, newPriorityId, newLabel) {
+  if (newPriorityId && ticketId) {
+    leantime
+      .rpc('Tickets.Tickets.patchTicket', {
+        id: ticketId,
+        values: {
+          priority: newPriorityId,
+        },
+      })
+      .then(() => {
+        // Optimistically update the UI; patchTicket only returns a bool.
+        // Update ALL buttons with this ID (same ticket can appear in multiple views)
+        document
+          .querySelectorAll(`#priority-ticket-${ticketId}`)
+          .forEach((button) => {
+            button.className = `table-button table-button-status`;
+            const circle = button.querySelector('.priority-circle');
+            if (circle) {
+              circle.className = `priority-circle priority-bg-${newPriorityId}`;
+            }
+            const label = button.querySelector('#priority-label');
+            if (label) {
+              label.textContent = newLabel;
+            }
+          });
+      })
+      .catch((err) => {
+        console.error('[ProjectOverview] Failed to update priority', err);
+      });
+  }
+}
+
+// Change duedate ajax
+function changeDueDate(event, ticketId, newDueDate) {
+  const parentElement = jQuery(event.target).closest('td');
+
+  if (newDueDate && ticketId) {
+    const dueDate = window.jQuery.datepicker.formatDate(
+      leantime.dateHelper.getFormatFromSettings('dateformat', 'jquery'),
+      new Date(newDueDate)
+    );
+    leantime
+      .rpc('Tickets.Tickets.patchTicket', {
+        id: ticketId,
+        values: {
+          dateToFinish: dueDate,
+        },
+      })
+      .then(() => {
+        saveSuccess(parentElement);
+      })
+      .catch(() => {
+        saveError(parentElement);
+      });
+  }
+}
+
+// Change assigned user ajax
+function changeAssignedUser(event, ticketId, userId) {
+  const parentElement = jQuery(event.target).closest('td');
+
+  if (userId && ticketId) {
+    leantime
+      .rpc('Tickets.Tickets.patchTicket', {
+        id: ticketId,
+        values: {
+          editorId: userId,
+        },
+      })
+      .then(() => {
+        saveSuccess(parentElement);
+      })
+      .catch(() => {
+        saveError(parentElement);
+      });
+  }
+}
+
+// Change plan hours ajax
+function changePlanHours(event, ticketId, newPlanHours) {
+  const parentElement = jQuery(event.target).closest('td');
+
+  if (newPlanHours && ticketId) {
+    leantime
+      .rpc('Tickets.Tickets.patchTicket', {
+        id: ticketId,
+        values: {
+          planHours: newPlanHours,
+        },
+      })
+      .then(() => {
+        saveSuccess(parentElement);
+      })
+      .catch(() => {
+        saveError(parentElement);
+      });
+  }
+}
+
+// Change hours remaining ajax
+function changeHoursRemaining(event, ticketId, newHoursRemaining) {
+  const parentElement = jQuery(event.target).closest('td');
+
+  if (newHoursRemaining && ticketId) {
+    leantime
+      .rpc('Tickets.Tickets.patchTicket', {
+        id: ticketId,
+        values: {
+          hourRemaining: newHoursRemaining,
+        },
+      })
+      .then(() => {
+        saveSuccess(parentElement);
+      })
+      .catch(() => {
+        saveError(parentElement);
+      });
+  }
+}
+
+// Change milestone ajax
+function changeMilestone(event, ticketId, newMilestoneId) {
+  const parentElement = jQuery(event.target).closest('td');
+  if (newMilestoneId && ticketId) {
+    leantime
+      .rpc('Tickets.Tickets.patchTicket', {
+        id: ticketId,
+        values: {
+          milestoneid: newMilestoneId,
+        },
+      })
+      .then(() => {
+        saveSuccess(parentElement);
+      })
+      .catch(() => {
+        saveError(parentElement);
+      });
+  }
+}
+
+// Change tags ajax
+function changeTags(event, ticketId, newTags) {
+  const parentElement = jQuery(event.target).closest('td');
+
+  if (ticketId) {
+    leantime
+      .rpc('Tickets.Tickets.patchTicket', {
+        id: ticketId,
+        values: {
+          tags: newTags || '',
+        },
+      })
+      .then(() => {
+        saveSuccess(parentElement);
+      })
+      .catch(() => {
+        saveError(parentElement);
+      });
+  }
+}
+
+// Change sort — client-side DOM sort + silent persist
+function changeSortBy(sortBy, clickedTh) {
+  const table = clickedTh.closest('table');
+  if (!table) return;
+
+  const headers = Array.from(table.querySelectorAll('thead th'));
+
+  // Toggle direction
+  const currentCol = table.dataset.sortBy;
+  const currentDir = table.dataset.sortDir;
+  let direction = 'asc';
+  if (currentCol === sortBy && currentDir === 'asc') direction = 'desc';
+  table.dataset.sortBy = sortBy;
+  table.dataset.sortDir = direction;
+
+  // Update visual indicators immediately
+  headers.forEach(function (th) {
+    th.classList.remove('sort-asc', 'sort-desc');
+  });
+  clickedTh.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+
+  // Persist sort preference (silent — server is the source of truth on next render)
+  const viewId = document.getElementById('selectedViewId');
+  if (viewId && viewId.value) {
+    fetch(window.location.pathname, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: new URLSearchParams({
+        action: 'saveSortOrder',
+        view: viewId.value,
+        sortBy: sortBy,
+        sortDirection: direction.toUpperCase(),
+      }),
+    });
+  }
+
+  // Re-fetch from server with the new sort. With pagination, client-side sort
+  // would only reorder the visible page; the server sorts the full dataset and
+  // resets pagination to page 1.
+  const form = document.getElementById('filtersForm');
+  if (form) {
+    refreshViewTable(form);
+  }
+}
+
+function refreshViewTable(form) {
+  const viewId = document.getElementById('selectedViewId');
+  if (!viewId || !viewId.value) return;
+
+  const formData = new FormData(form);
+
+  // Include current sort state from the active table
+  const activePanel = document.getElementById('view-' + viewId.value);
+  if (activePanel) {
+    const table = activePanel.querySelector('table');
+    if (table) {
+      formData.set('sortBy', table.dataset.sortBy || 'priority');
+      formData.set(
+        'sortDirection',
+        (table.dataset.sortDir || 'asc').toUpperCase()
+      );
+    }
+  }
+
+  // Always start at page 1 — refreshViewTable is called for filter, sort, and
+  // lazy-load events, all of which should reset pagination.
+  formData.set('page', '1');
+
+  // Cancel any in-flight refresh or lazy-load on this panel so a slow
+  // earlier response can't overwrite fresh data.
+  if (activePanel) {
+    teardownLazyLoad(activePanel);
+    if (activePanel._refreshController) {
+      activePanel._refreshController.abort();
+    }
+  }
+  const controller = new AbortController();
+  if (activePanel) activePanel._refreshController = controller;
+
+  fetch(
+    '/ProjectOverview/ProjectOverview/loadViewTable/' +
+      encodeURIComponent(viewId.value),
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: new URLSearchParams(formData),
+      signal: controller.signal,
+    }
+  )
+    .then(function (response) {
+      if (!response.ok) {
+        return response.text().then(function (body) {
+          const err = new Error('HTTP ' + response.status);
+          err.status = response.status;
+          err.responseBody = body;
+          throw err;
+        });
+      }
+      return response.text();
+    })
+    .then(function (html) {
+      if (controller.signal.aborted) return;
+      if (!activePanel) return;
+      activePanel.innerHTML = html;
+      // Re-init components inside the new table
+      initTagsSelects();
+      if (typeof tippy === 'function') {
+        tippy(activePanel.querySelectorAll('[data-tippy-content]'));
+      }
+      attachLazyLoad(activePanel);
+      updateResultCount(activePanel);
+    })
+    .catch(function (err) {
+      if (err.name === 'AbortError') return;
+      console.error(
+        '[ProjectOverview] View load failed:',
+        err,
+        err.responseBody || ''
+      );
+      if (activePanel) {
+        const isAuthError = err.status === 401 || err.status === 403;
+        const msg = isAuthError
+          ? (window.projectOverviewI18n &&
+              window.projectOverviewI18n.sessionExpired) ||
+            '[i18n missing] session_expired'
+          : (window.projectOverviewI18n &&
+              window.projectOverviewI18n.couldNotLoadView) ||
+            '[i18n missing] could_not_load_view';
+        const errEl = document.createElement('div');
+        errEl.className = 'lazy-row-status lazy-row-error';
+        errEl.style.padding = '24px';
+
+        const icon = document.createElement('span');
+        icon.className = 'lazy-row-status-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = '⚠';
+
+        const text = document.createElement('span');
+        text.className = 'lazy-row-status-text';
+        text.textContent = msg;
+
+        errEl.append(icon, text);
+        activePanel.replaceChildren(errEl);
+      }
+    })
+    .finally(function () {
+      if (activePanel && activePanel._refreshController === controller) {
+        activePanel._refreshController = null;
+      }
+    });
+}
+
+/**
+ * Wire the manual "Load more" + Retry buttons inside the sentinel for `panel`.
+ * Idempotent — clones the buttons before re-binding so we never stack
+ * listeners across repeated calls (e.g., after a splice).
+ *
+ * @param {HTMLElement} panel
+ */
+function attachLazyLoad(panel) {
+  if (!panel) return;
+  teardownLazyLoad(panel);
+
+  const sentinel = panel.querySelector('.lazy-row-sentinel');
+  if (!sentinel) return;
+
+  bindSentinelButtons(panel, sentinel);
+}
+
+/**
+ * Cancel any in-flight lazy-load fetch on `panel`. Safe to call before or
+ * after the panel's DOM has been replaced.
+ *
+ * @param {HTMLElement} panel
+ */
+function teardownLazyLoad(panel) {
+  if (!panel) return;
+  if (panel._lazyController) {
+    panel._lazyController.abort();
+    panel._lazyController = null;
+  }
+}
+
+function bindSentinelButtons(panel, sentinel) {
+  const loadBtn = sentinel.querySelector('.lazy-row-load-more');
+  if (loadBtn) {
+    loadBtn.addEventListener('click', function () {
+      loadNextLazyPage(panel, sentinel);
+    });
+  }
+  const retryBtn = sentinel.querySelector('.lazy-row-retry');
+  if (retryBtn) {
+    retryBtn.addEventListener('click', function () {
+      loadNextLazyPage(panel, sentinel);
+    });
+  }
+}
+
+/**
+ * Fetch the next page for `panel`'s sentinel and splice the response in.
+ *
+ * @param {HTMLElement} panel
+ * @param {HTMLTableRowElement} sentinel
+ */
+function loadNextLazyPage(panel, sentinel) {
+  if (sentinel.dataset.state === 'loading') return;
+  const url = sentinel.dataset.nextUrl;
+  const page = sentinel.dataset.nextPage;
+  if (!url || !page) return;
+
+  sentinel.dataset.state = 'loading';
+  showLazyLoading(sentinel);
+
+  const form = document.getElementById('filtersForm');
+  const formData = form ? new FormData(form) : new FormData();
+
+  const table = panel.querySelector('table');
+  if (table) {
+    formData.set('sortBy', table.dataset.sortBy || 'priority');
+    formData.set(
+      'sortDirection',
+      (table.dataset.sortDir || 'asc').toUpperCase()
+    );
+  }
+  formData.set('page', page);
+
+  // Cancel any in-flight lazy-load fetch on this panel before issuing a new one.
+  if (panel._lazyController) {
+    panel._lazyController.abort();
+  }
+  const controller = new AbortController();
+  panel._lazyController = controller;
+
+  fetch(url, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    body: new URLSearchParams(formData),
+    signal: controller.signal,
+  })
+    .then(function (response) {
+      if (!response.ok) {
+        // Read the body so the message isn't a useless "HTTP 500"
+        return response.text().then(function (body) {
+          const err = new Error('HTTP ' + response.status);
+          err.status = response.status;
+          err.responseBody = body;
+          throw err;
+        });
+      }
+      return response.text();
+    })
+    .then(function (html) {
+      if (controller.signal.aborted) return;
+      if (!sentinel.isConnected) return;
+
+      // Use DOMParser for robust fragment parsing — handles whitespace,
+      // partial markup, and edge cases more reliably than innerHTML on tbody.
+      const doc = new DOMParser().parseFromString(
+        '<table><tbody>' + (html || '') + '</tbody></table>',
+        'text/html'
+      );
+      const parsedTbody = doc.querySelector('tbody');
+      const newRows = parsedTbody ? Array.from(parsedTbody.children) : [];
+
+      const parent = sentinel.parentNode;
+      if (!parent) return;
+
+      try {
+        // Splice in the new rows, then drop the spent sentinel.
+        for (const row of newRows) {
+          parent.insertBefore(row, sentinel);
+        }
+        sentinel.remove();
+
+        // Initialize TomSelect on any tag-selects we just added. We do this
+        // explicitly per-row in addition to the global initTagsSelects() call
+        // so newly-inserted selects get wired even if the global pass misses
+        // them for any reason.
+        for (const row of newRows) {
+          if (row.querySelectorAll) {
+            row.querySelectorAll('.ticket-tags-select').forEach(function (sel) {
+              if (!sel.tomselect) initSingleTagSelect(sel);
+            });
+          }
+        }
+        // And cover any holdouts via the global pass.
+        initTagsSelects();
+
+        if (typeof tippy === 'function') {
+          tippy(
+            panel.querySelectorAll(
+              '[data-tippy-content]:not([data-tippy-instance])'
+            )
+          );
+        }
+
+        // Re-attach to the new sentinel (no-op when this was the last page).
+        attachLazyLoad(panel);
+        // Refresh the top-of-table "Showing X of Y" counter using the data
+        // carried on the new sentinel / end-marker row.
+        updateResultCount(panel);
+      } catch (spliceErr) {
+        console.error('[ProjectOverview] Lazy-load splice failed:', spliceErr);
+        const live = panel.querySelector('.lazy-row-sentinel');
+        const target = live && live.isConnected ? live : sentinel;
+        if (target && target.isConnected) {
+          target.dataset.state = 'error';
+          showLazyError(
+            target,
+            (window.projectOverviewI18n &&
+              window.projectOverviewI18n.failedToInsertRows) ||
+              '[i18n missing] failed_to_insert_rows'
+          );
+        }
+      }
+    })
+    .catch(function (err) {
+      if (err.name === 'AbortError') return;
+      console.error(
+        '[ProjectOverview] Lazy-load failed:',
+        err,
+        err.responseBody || ''
+      );
+      // Make sure the sentinel is in a clickable error state, even if
+      // something downstream blew up before we got there.
+      const live = panel.querySelector('.lazy-row-sentinel');
+      const target = live || sentinel;
+      if (target && target.isConnected) {
+        target.dataset.state = 'error';
+        const isAuthError = err.status === 401 || err.status === 403;
+        const msg = isAuthError
+          ? (window.projectOverviewI18n &&
+              window.projectOverviewI18n.sessionExpired) ||
+            '[i18n missing] session_expired'
+          : (window.projectOverviewI18n &&
+              window.projectOverviewI18n.couldNotLoadMoreRows) ||
+            '[i18n missing] could_not_load_more_rows';
+        showLazyError(target, msg);
+      }
+    })
+    .finally(function () {
+      if (panel._lazyController === controller) {
+        panel._lazyController = null;
+      }
+    });
+}
+
+/**
+ * Refresh the "Showing X of Y" counter at the top of a panel's table and
+ * inside its lazy-row sentinel. Called after each lazy-load splice; also
+ * called for the initial render via the top counter's server-rendered HTML
+ * (this function then just keeps it in sync as more pages arrive).
+ *
+ * @param {HTMLElement} panel
+ */
+function updateResultCount(panel) {
+  const i18n = window.projectOverviewI18n || {};
+  const counter = panel.querySelector('.result-count');
+  if (!counter) return;
+
+  const total = parseInt(counter.dataset.total, 10);
+  if (!Number.isFinite(total)) return;
+
+  // Count visible data rows (exclude lazy-row footer rows).
+  const tbody = panel.querySelector('table tbody');
+  const loaded = tbody
+    ? Array.from(tbody.children).filter(
+        (row) =>
+          !row.classList.contains('lazy-row-sentinel') &&
+          !row.classList.contains('lazy-row-end-marker')
+      ).length
+    : 0;
+
+  counter.dataset.loaded = String(loaded);
+
+  let text;
+  if (total === 0) {
+    text = i18n.resultCountNone || 'No results';
+  } else if (loaded >= total) {
+    text = (i18n.resultCountAll || 'Showing all {total}').replace(
+      '{total}',
+      String(total)
+    );
+  } else {
+    text = (i18n.resultCountPartial || 'Showing {loaded} of {total}')
+      .replace('{loaded}', String(loaded))
+      .replace('{total}', String(total));
+  }
+  counter.textContent = text;
+
+  // Mirror the count next to the load-more button so the contextual cue is
+  // visible without scrolling back up.
+  const sentinelCount = panel.querySelector('[data-role="lazy-row-count"]');
+  if (sentinelCount) sentinelCount.textContent = text;
+}
+
+function setSentinelState(sentinel, visible) {
+  ['ready', 'loading', 'error'].forEach(function (key) {
+    const node = sentinel.querySelector('.lazy-row-' + key);
+    if (!node) return;
+    if (key === visible) node.removeAttribute('hidden');
+    else node.setAttribute('hidden', '');
+  });
+}
+
+function showLazyLoading(sentinel) {
+  setSentinelState(sentinel, 'loading');
+}
+
+function showLazyError(sentinel, message) {
+  setSentinelState(sentinel, 'error');
+  const error = sentinel.querySelector('.lazy-row-error');
+  const text = error ? error.querySelector('.lazy-row-status-text') : null;
+  if (text && message) text.textContent = message;
+  // After error, allow another click to retry.
+  sentinel.dataset.state = 'ready';
+}
+
+function toggleUnsavedIndicator(targetViewId, hasChanges) {
+  if (!targetViewId) return;
+
+  // Track which views have unsaved changes
+  if (!window._viewsWithUnsavedChanges) window._viewsWithUnsavedChanges = {};
+  window._viewsWithUnsavedChanges[targetViewId] = hasChanges;
+
+  // Clear cached form data when changes are reverted
+  if (!hasChanges && window._viewCachedFormData) {
+    delete window._viewCachedFormData[targetViewId];
+  }
+
+  const tab = document.querySelector(
+    '#projectOverviewTabs > ul > li[data-target="' + targetViewId + '"]'
+  );
+  if (tab) {
+    tab.classList.toggle('has-unsaved-changes', hasChanges);
+  }
+
+  // Mirror onto the sidebar item.
+  const sidebarLink = document.querySelector(
+    'a.projectoverview-view-item[data-view-key="' + targetViewId + '"]'
+  );
+  if (sidebarLink && sidebarLink.parentElement) {
+    sidebarLink.parentElement.classList.toggle(
+      'has-unsaved-changes',
+      hasChanges
+    );
+  }
+
+  // The save-changes button is visible when the active view has unsaved changes,
+  // or whenever the synthetic "new" tab is active (it always wants to be saveable
+  // once the user has interacted with it; the dirty-tracking handles the latter).
+  // The reset-changes button mirrors dirty state without the "__new" exception.
+  updateSaveBtnVisibility();
+  updateResetBtnVisibility();
+}
+
+// Save success animation
+function saveSuccess(elem) {
+  elem.addClass('save-success');
+
+  setTimeout(() => {
+    elem.removeClass('save-success');
+  }, 1000);
+}
+
+// Save error animation
+function saveError(elem) {
+  elem.addClass('save-error');
+
+  setTimeout(() => {
+    elem.removeClass('save-error');
+  }, 1000);
+}

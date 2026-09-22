@@ -1,0 +1,330 @@
+# Changelog
+
+## [Unreleased]
+
+## [4.6.0] - 2026-07-08
+
+* [PR-102](https://github.com/ITK-Leantime/project-overview/pull/102)
+  * Fix inline ticket edits returning 404: use the JSON-RPC API instead of the removed REST endpoint.
+* [PR-101](https://github.com/ITK-Leantime/project-overview/pull/101)
+  * Normalize Taskfile and complete the Laravel audit ignore list.
+
+## [4.5.0] - 2026-06-11
+
+* [PR-99](https://github.com/ITK-Leantime/project-overview/pull/99)
+  * Show "Showing X of Y" above each view's table and next to the load-more button.
+* [PR-98](https://github.com/ITK-Leantime/project-overview/pull/98)
+  * Combine Priority and Status filters with AND instead of OR.
+
+## [4.4.2] - 2026-06-10
+
+* [PR-96](https://github.com/ITK-Leantime/project-overview/pull/96)
+  * Fix "Done" status filter always returning zero rows.
+
+## [4.4.1] - 2026-06-04
+
+* [PR-95](https://github.com/ITK-Leantime/project-overview/pull/95)
+  * Simplify share mechanism: copy the view URL directly instead of generating a separate share link.
+
+## [4.4.0] - 2026-06-04
+
+* [PR-94](https://github.com/ITK-Leantime/project-overview/pull/94)
+  * Persist "+ new view" filter draft in localStorage across page reloads.
+* [PR-93](https://github.com/ITK-Leantime/project-overview/pull/93)
+  * Add reset button that reverts unsaved filter changes.
+* [PR-92](https://github.com/ITK-Leantime/project-overview/pull/92)
+  * Extract filter JS into a separate module.
+* [PR-91](https://github.com/ITK-Leantime/project-overview/pull/91)
+  * Add Select all / Deselect all toggle to filter dropdowns.
+  * Improve keyboard navigation in filter dropdowns.
+* [PR-90](https://github.com/ITK-Leantime/project-overview/pull/90)
+  * Sort the user filter dropdown alphabetically and hide inactive users.
+* [PR-89](https://github.com/ITK-Leantime/project-overview/pull/89)
+  * Fix new view page unable to visualize default configured view.
+
+## [4.3.0] - 2026-05-27
+
+* [PR-86](https://github.com/ITK-Leantime/project-overview/pull/86)
+  * Fix empty status dropdowns due to array_merge renumbering project-ID keys.
+  * Fix issue with length of status title exceeding dropdown max width.
+* [PR-87](https://github.com/ITK-Leantime/project-overview/pull/85)
+  * Move the project list out of the "Filters" dropdown into a dedicated "Projects" dropdown.
+  * Add search field to each filter dropdown.
+* [PR-84](https://github.com/ITK-Leantime/project-overview/pull/84)
+  * Use javascript to move the list of user views into a submenu-looking structure in sidebar.
+
+## [4.2.0] - 2026-05-20
+
+* [PR-83](https://github.com/ITK-Leantime/project-overview/pull/83)
+  * Redesign view management.
+* [PR-82](https://github.com/ITK-Leantime/project-overview/pull/82)
+  * Performance optimizations (batched queries replacing N+1 + correlated subqueries, paginated infinite scroll)
+  * Enforce project-access scoping in the repository SQL layer instead of trusting callers
+  * Auth checks added to lazy-load endpoints; session-expired vs server-error are surfaced separately in the UI
+  * `saveSortOrder` / `saveTabOrder` now return JSON via Laravel's response pipeline (no more `exit(json_encode(...))`)
+
+## [4.1.0] - 2026-04-16
+
+* [PR-80](https://github.com/ITK-Leantime/project-overview/pull/80)
+  * Decluttering interface.
+* [PR-79](https://github.com/ITK-Leantime/project-overview/pull/79)
+  * Reworked views to be able to display changes in filters instantly
+* [PR-78](https://github.com/ITK-Leantime/project-overview/pull/78)
+  * Fix issue regarding sorting
+  * Sorting is now coupled to the view config
+* [PR-77](https://github.com/ITK-Leantime/project-overview/pull/77)
+  * Add live-share views: subscribers always see the owner's latest view config
+  * Fix install() to handle missing directories and broken symlinks
+
+## [4.0.2] - 2026-03-04
+
+* [PR-73](https://github.com/ITK-Leantime/project-overview/pull/73)
+  * Adjusted subqueries made via `app('db')->connection()->raw(...)`
+
+## [4.0.1] - 2026-01-23
+
+* [PR-70](https://github.com/ITK-Leantime/project-overview/pull/70)
+  * Uncapitalize first letter of template name in controller.
+
+## [4.0.0] - 2026-01-22
+
+* [PR-67](https://github.com/ITK-Leantime/project-overview/pull/67)
+  * Add ability to share views via a link
+* [PR-66](https://github.com/ITK-Leantime/project-overview/pull/66)
+  * Introduce a view-based approach
+  * Added use of DTOs to control data flow
+
+## [3.3.3] - 2025-08-21
+
+* [PR-64](https://github.com/ITK-Leantime/project-overview/pull/64)
+  * Excluding tickets with status -1 (archived)
+
+## [3.3.2] - 2025-08-05
+
+* [PR-62](https://github.com/ITK-Leantime/project-overview/pull/62)
+  * Minor visuals
+
+## [3.3.1] - 2025-08-05
+
+* [PR-60](https://github.com/ITK-Leantime/project-overview/pull/60)
+  * Project name as link
+
+## [3.3.0] - 2025-08-01
+
+* [PR-58](https://github.com/ITK-Leantime/project-overview/pull/58)
+  * Added specification of who logged hours on what
+
+## [3.2.0] - 2025-07-28
+
+* [PR-56](https://github.com/ITK-Leantime/project-overview/pull/56)
+  * Correctly set status when creating new ticket.
+
+## [3.1.2] - 2025-06-24
+
+* [PR-53](https://github.com/ITK-Leantime/project-overview/pull/53)
+  * Autofocus user filter on load
+
+## [3.1.1] - 2025-05-16
+
+* [PR-51](https://github.com/ITK-Leantime/project-overview/pull/51)
+  * Downgrade method requirements to match current code base.
+
+## [3.1.0] - 2025-05-14
+
+* [PR-49](https://github.com/ITK-Leantime/project-overview/pull/49)
+  * Make full list load require confirmation
+
+## [3.0.3] - 2025-05-06
+
+* [PR-47](https://github.com/ITK-Leantime/project-overview/pull/47)
+  * Explicitly defined start and end of week
+
+## [3.0.2] - 2025-04-01
+
+* [PR-45](https://github.com/ITK-Leantime/project-overview/pull/45)
+  * Corrected header of priority
+
+## [3.0.1] - 2025-04-01
+
+* [PR-43](https://github.com/ITK-Leantime/project-overview/pull/43)
+  * Changed order of project name and ticket title
+
+## [3.0.0] - 2025-03-27
+
+* [PR-41](https://github.com/ITK-Leantime/project-overview/pull/41)
+  * Added sort to url (sortby and sortorder)
+  * Added the possibility to see tickets without due date
+  * Added the possibility to see tickets exceeded due date
+  * Added some blade linting to readme (and linted the blade file)
+* [PR-40](https://github.com/ITK-Leantime/project-overview/pull/40)
+  * A little css
+* [PR-39](https://github.com/ITK-Leantime/project-overview/pull/39)
+  * Npm audit fix
+  * Update leantime to 3.4.3
+
+## [2.3.0] - 2025-01-14
+
+* [PR-36](https://github.com/ITK-Leantime/project-overview/pull/36)
+  * Added sort by column
+
+## [2.2.1] - 2025-01-14
+
+* [PR-34](https://github.com/ITK-Leantime/project-overview/pull/34)
+  * Reordered filters
+
+## [2.2.0] - 2025-01-06
+
+* [PR-32](https://github.com/ITK-Leantime/project-overview/pull/32)
+  * Added compatability for Leantime 3.3x
+
+## [2.1.5] - 2024-10-23
+
+* [PR-30](https://github.com/ITK-Leantime/project-overview/pull/30)
+  * Fix search while user filter is active
+
+## [2.1.4] - 2024-10-22
+
+* [PR-28](https://github.com/ITK-Leantime/project-overview/pull/28)
+  * Remove last trace of milestone coloring
+
+## [2.1.3] - 2024-10-22
+
+* [PR-26](https://github.com/ITK-Leantime/project-overview/pull/26)
+  * Fixed broken status and priority selectors
+  * Removed colouring of milestones due to recurring issues with white text on white background
+
+## [2.1.2] - 2024-10-18
+
+* [PR-24](https://github.com/ITK-Leantime/project-overview/pull/24)
+  * Fixed issue where not all projects were returned from repo
+
+## [2.1.1] - 2024-10-17
+
+* [PR-22](https://github.com/ITK-Leantime/project-overview/pull/22)
+  * Correctly build assets
+
+## [2.1.0] - 2024-10-17
+
+* [PR-20](https://github.com/ITK-Leantime/project-overview/pull/20)
+  * Add empty option for milestone select
+  * Add project column between id and taskname
+  * Add multiselect for user filter
+* [PR-19](https://github.com/ITK-Leantime/project-overview/pull/19)
+  Fix milestone text color so it is always white when a milestone is chosen, always black when not.
+
+## [2.0.3] - 2024-09-19
+
+* [PR-16](https://github.com/ITK-Leantime/project-overview/pull/16)
+  Remove urlencode in `register.php`
+
+## [2.0.2] - 2024-09-19
+
+* [PR-14](https://github.com/ITK-Leantime/project-overview/pull/14)
+  * Removed additional border-radiusses
+  * Format javascript dates to force /'s instead of .'s.
+
+## [2.0.1] - 2024-09-18
+
+* [PR-12](https://github.com/ITK-Leantime/project-overview/pull/12)
+  * Streamline release/deploy
+  * Add Markdown Runner to actions
+* [PR-11](https://github.com/ITK-Leantime/project-overview/pull/11)
+  * Add request uri check to scope js/css
+
+## [2.0.0] 2024-09-03
+
+* [PR-10](https://github.com/ITK-Leantime/project-overview/pull/10)
+  * Added compatability for Leantime 3.2
+  * Change imports
+  * Replace old session handling with new session handling
+  * Update leantime dependency for phpstan
+  * Add composer.lock
+  * Update from php8.1 -> php 8.3 in pr.yml and README
+
+## [1.0.0] 2024-08-16
+
+* [PR-9](https://github.com/ITK-Leantime/project-overview/pull/9)
+  * Specified files to only be loaded on projectOverview page
+  * Minor layout changes and classes for styling
+  * Minor css alterations and additions
+  * Added visual feedback when saving asynchronously
+
+* [PR-7](https://github.com/ITK-Leantime/project-overview/pull/7)
+  * Add prettier
+  * Add node_modules to different ignore files
+  * Add deploy script
+  * Merge release and prerelease files
+  * Add shell check to pr.yml
+  * Add node to dockerfile to run prettier
+
+* [PR-6](https://github.com/ITK-Leantime/project-overview/pull/4)
+  * Add build script
+  * Add check-create-release to pr.yml
+  * Add pre-release.yml and release.yml to github workflows
+  * Add dockerfile + install of rsync
+
+* [PR-5](https://github.com/ITK-Leantime/project-overview/pull/7)
+  * Make the side menu "personal", so when on the "project overview"-page, the sidemenu doesn't change to the projects
+    menu.
+
+* [PR-4](https://github.com/ITK-Leantime/project-overview/pull/6)
+  * Add ```ticket.planHours``` and ```ticket.hourRemaining``` to sql query, so the data is shown in the table.
+
+* [PR-3](https://github.com/ITK-Leantime/project-overview/pull/5)
+  * Add burger menu item (change ```<i``` to ```<span```)
+  * Limit search on dueDate (dateToFinish in db)
+  * Cast dueDate in sql query, because the time is not necessary for the filter
+
+* [PR-2](https://github.com/ITK-Leantime/project-overview/pull/3)
+* Project overview plugin
+  * Services file with install/uninstall and methods for passing data from the repo to the controller
+  * A controller that feeds data to the template
+  * A template
+  * A repository that handles the sql queries
+  * A filter/search that uses a redirect
+* code analysis
+* code style
+
+* [PR-1](https://github.com/ITK-Leantime/project-overview/pull/1)
+  * Basic plugin, prints ids of tasks and a headline
+  * Menu entry in register.php
+  * Language support, very copy pasted but with links to sources
+
+[Unreleased]: https://github.com/ITK-Leantime/project-overview/compare/4.6.0...HEAD
+[4.6.0]: https://github.com/ITK-Leantime/project-overview/compare/4.5.0...4.6.0
+[4.5.0]: https://github.com/ITK-Leantime/project-overview/compare/4.4.2...4.5.0
+[4.4.2]: https://github.com/ITK-Leantime/project-overview/compare/4.4.1...4.4.2
+[4.4.1]: https://github.com/ITK-Leantime/project-overview/compare/4.4.0...4.4.1
+[4.4.0]: https://github.com/ITK-Leantime/project-overview/compare/4.3.0...4.4.0
+[4.3.0]: https://github.com/ITK-Leantime/project-overview/compare/4.2.0...4.3.0
+[4.2.0]: https://github.com/ITK-Leantime/project-overview/compare/4.1.0...4.2.0
+[4.1.0]: https://github.com/ITK-Leantime/project-overview/compare/4.0.2...4.1.0
+[4.0.2]: https://github.com/ITK-Leantime/project-overview/compare/4.0.1...4.0.2
+[4.0.1]: https://github.com/ITK-Leantime/project-overview/compare/4.0.0...4.0.1
+[4.0.0]: https://github.com/ITK-Leantime/project-overview/compare/3.3.3...4.0.0
+[3.3.3]: https://github.com/ITK-Leantime/project-overview/compare/3.3.2...3.3.3
+[3.3.2]: https://github.com/ITK-Leantime/project-overview/compare/3.3.1...3.3.2
+[3.3.1]: https://github.com/ITK-Leantime/project-overview/compare/3.3.0...3.3.1
+[3.3.0]: https://github.com/ITK-Leantime/project-overview/compare/3.2.1...3.3.0
+[3.2.0]: https://github.com/ITK-Leantime/project-overview/compare/3.1.2...3.2.0
+[3.1.2]: https://github.com/ITK-Leantime/project-overview/compare/3.1.1...3.1.2
+[3.1.1]: https://github.com/ITK-Leantime/project-overview/compare/3.1.0...3.1.1
+[3.1.0]: https://github.com/ITK-Leantime/project-overview/compare/3.0.3...3.1.0
+[3.0.3]: https://github.com/ITK-Leantime/project-overview/compare/3.0.2...3.0.3
+[3.0.2]: https://github.com/ITK-Leantime/project-overview/compare/3.0.1...3.0.2
+[3.0.1]: https://github.com/ITK-Leantime/project-overview/compare/3.0.0...3.0.1
+[3.0.0]: https://github.com/ITK-Leantime/project-overview/compare/2.3.0...3.0.0
+[2.3.0]: https://github.com/ITK-Leantime/project-overview/compare/2.2.1...2.3.0
+[2.2.1]: https://github.com/ITK-Leantime/project-overview/compare/2.2.0...2.2.1
+[2.2.0]: https://github.com/ITK-Leantime/project-overview/compare/2.1.5...2.2.0
+[2.1.5]: https://github.com/ITK-Leantime/project-overview/compare/2.1.4...2.1.5
+[2.1.4]: https://github.com/ITK-Leantime/project-overview/compare/2.1.3...2.1.4
+[2.1.3]: https://github.com/ITK-Leantime/project-overview/compare/2.1.2...2.1.3
+[2.1.2]: https://github.com/ITK-Leantime/project-overview/compare/2.1.1...2.1.2
+[2.1.1]: https://github.com/ITK-Leantime/project-overview/compare/2.1.0...2.1.1
+[2.1.0]: https://github.com/ITK-Leantime/project-overview/compare/2.0.3...2.1.0
+[2.0.3]: https://github.com/ITK-Leantime/project-overview/compare/2.0.2...2.0.3
+[2.0.2]: https://github.com/ITK-Leantime/project-overview/compare/2.0.1...2.0.2
+[2.0.1]: https://github.com/ITK-Leantime/project-overview/compare/2.0.0...2.0.1
+[2.0.0]: https://github.com/ITK-Leantime/project-overview/compare/1.0.0...2.0.0
+[1.0.0]: https://github.com/ITK-Leantime/project-overview/releases/tag/1.0.0

@@ -1,0 +1,968 @@
+{
+  "plugins/APIData/Controllers/API.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "9c53e400ff5e30a8059de48fe27addcb",
+    "semantic_hash": "9c53e400ff5e30a8059de48fe27addcb"
+  },
+  "plugins/APIData/Model/BadRequestException.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "55958130f9d994726b78d560002ad35a",
+    "semantic_hash": "55958130f9d994726b78d560002ad35a"
+  },
+  "plugins/APIData/Model/CoercesRequestInput.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "68a57b2b7c4240b66e332ebff5f37237",
+    "semantic_hash": "68a57b2b7c4240b66e332ebff5f37237"
+  },
+  "plugins/APIData/Model/DeletedData.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "d6321b73a13311e2d3f29245231f695d",
+    "semantic_hash": "d6321b73a13311e2d3f29245231f695d"
+  },
+  "plugins/APIData/Model/DeletedRequestParameters.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "c562aff95487e9011f0406eb3c29dd93",
+    "semantic_hash": "c562aff95487e9011f0406eb3c29dd93"
+  },
+  "plugins/APIData/Model/MilestoneData.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "66ffa3a0ace60fc16f2be86f494c28f9",
+    "semantic_hash": "66ffa3a0ace60fc16f2be86f494c28f9"
+  },
+  "plugins/APIData/Model/ProjectData.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "a16c37ce2eb0991475d621f2fbb716dc",
+    "semantic_hash": "a16c37ce2eb0991475d621f2fbb716dc"
+  },
+  "plugins/APIData/Model/RequestParameters.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "25184016c8d8e66fd288b6d87ad0b9b5",
+    "semantic_hash": "25184016c8d8e66fd288b6d87ad0b9b5"
+  },
+  "plugins/APIData/Model/ResponseData.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "65ce13481d81d9be4921d7a6bc712f0b",
+    "semantic_hash": "65ce13481d81d9be4921d7a6bc712f0b"
+  },
+  "plugins/APIData/Model/TicketData.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "ac2bcacff532418b22aaea539640f703",
+    "semantic_hash": "ac2bcacff532418b22aaea539640f703"
+  },
+  "plugins/APIData/Model/TimesheetData.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "dc4508b8f420fe17b9c7f85aa02a037d",
+    "semantic_hash": "dc4508b8f420fe17b9c7f85aa02a037d"
+  },
+  "plugins/APIData/Model/WorkerData.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "e20e4016c8c8579000827c1e09ad8bfd",
+    "semantic_hash": "e20e4016c8c8579000827c1e09ad8bfd"
+  },
+  "plugins/APIData/Repositories/ApiDataRepository.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "240eca7f929786e9747a5bce727afb94",
+    "semantic_hash": "240eca7f929786e9747a5bce727afb94"
+  },
+  "plugins/APIData/Repositories/SchemaRepository.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "f880a0283b3e5a447668aacb5bc2a066",
+    "semantic_hash": "f880a0283b3e5a447668aacb5bc2a066"
+  },
+  "plugins/APIData/Services/APIData.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "d1f1e33007d9d22887ec9f19b911fdf8",
+    "semantic_hash": "d1f1e33007d9d22887ec9f19b911fdf8"
+  },
+  "plugins/APIData/composer.json": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "8aaf596290cac84fcdc1cce5ac5b974c",
+    "semantic_hash": "8aaf596290cac84fcdc1cce5ac5b974c"
+  },
+  "plugins/APIData/index.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "061b3ac08148ed1bb732a746e95620ce",
+    "semantic_hash": "061b3ac08148ed1bb732a746e95620ce"
+  },
+  "plugins/APIData/register.php": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "3beefb00777a6bd04265b7d33c23efa9",
+    "semantic_hash": "3beefb00777a6bd04265b7d33c23efa9"
+  },
+  "plugins/CopyTicketLink/Middleware/GetLanguageAssets.php": {
+    "mtime": 1780043656.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "265e39d19ed51049d87e3932947a0acb",
+    "semantic_hash": "265e39d19ed51049d87e3932947a0acb"
+  },
+  "plugins/CopyTicketLink/Services/CopyTicketLink.php": {
+    "mtime": 1780043656.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "62d050c2e05c17fddabebdbcef301375",
+    "semantic_hash": "62d050c2e05c17fddabebdbcef301375"
+  },
+  "plugins/CopyTicketLink/assets/copy-ticket-link.js": {
+    "mtime": 1780043656.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "00d4795fa38be92f328b2a162e091675",
+    "semantic_hash": "00d4795fa38be92f328b2a162e091675"
+  },
+  "plugins/CopyTicketLink/composer.json": {
+    "mtime": 1780043656.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "4d80ebb420916e68a94e67583fd200e8",
+    "semantic_hash": "4d80ebb420916e68a94e67583fd200e8"
+  },
+  "plugins/CopyTicketLink/register.php": {
+    "mtime": 1780043656.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "dfe4ee32726839b774dc451e5d67cdcc",
+    "semantic_hash": "dfe4ee32726839b774dc451e5d67cdcc"
+  },
+  "plugins/OmniSearch/Controllers/OmniSearch.php": {
+    "mtime": 1783538547.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "09d236fef3679ee60481fa9d2cb40078",
+    "semantic_hash": "09d236fef3679ee60481fa9d2cb40078"
+  },
+  "plugins/OmniSearch/Middleware/GetLanguageAssets.php": {
+    "mtime": 1783538547.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "cbb41624d31ede881d15190f49a82253",
+    "semantic_hash": "cbb41624d31ede881d15190f49a82253"
+  },
+  "plugins/OmniSearch/Repositories/OmniSearch.php": {
+    "mtime": 1783538547.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "f37f0f8f43138ed1d65c9391b32985a1",
+    "semantic_hash": "f37f0f8f43138ed1d65c9391b32985a1"
+  },
+  "plugins/OmniSearch/Services/OmniSearch.php": {
+    "mtime": 1783538547.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "87671b7414a73bbd7af2e9771ceb8b11",
+    "semantic_hash": "87671b7414a73bbd7af2e9771ceb8b11"
+  },
+  "plugins/OmniSearch/bin/deploy": {
+    "mtime": 1783538547.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "da93a79a8bee3002bd7159d505cd9d1a",
+    "semantic_hash": "da93a79a8bee3002bd7159d505cd9d1a"
+  },
+  "plugins/OmniSearch/composer.json": {
+    "mtime": 1783538547.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "8b4f766a8e58a3dfb36df8e59477e877",
+    "semantic_hash": "8b4f766a8e58a3dfb36df8e59477e877"
+  },
+  "plugins/OmniSearch/index.php": {
+    "mtime": 1783538547.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "ce407ff5715c837d02b1aba7975bf512",
+    "semantic_hash": "ce407ff5715c837d02b1aba7975bf512"
+  },
+  "plugins/OmniSearch/register.php": {
+    "mtime": 1783538547.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "68694de6b7cb3abfbfcf4dfbc2d755ed",
+    "semantic_hash": "68694de6b7cb3abfbfcf4dfbc2d755ed"
+  },
+  "plugins/ProjectOverview/Controllers/ProjectOverview.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "f2ba3aff52be06fd651e919da0022c50",
+    "semantic_hash": "f2ba3aff52be06fd651e919da0022c50"
+  },
+  "plugins/ProjectOverview/DTO/ProjectOverviewDTO.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "1b7238f08f95bd1331e88eb24353570a",
+    "semantic_hash": "1b7238f08f95bd1331e88eb24353570a"
+  },
+  "plugins/ProjectOverview/DTO/ProjectOverviewFiltersDataDTO.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "59ba15cf2ab074de749d144ed06e4e4f",
+    "semantic_hash": "59ba15cf2ab074de749d144ed06e4e4f"
+  },
+  "plugins/ProjectOverview/DTO/SharedViewLookupResult.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "71fd3a43c1da5b67f98ab58bd4756d00",
+    "semantic_hash": "71fd3a43c1da5b67f98ab58bd4756d00"
+  },
+  "plugins/ProjectOverview/DTO/UserViewDTO.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "ca72a88c0740b32928268cf034a9cb2a",
+    "semantic_hash": "ca72a88c0740b32928268cf034a9cb2a"
+  },
+  "plugins/ProjectOverview/DTO/ViewDTO.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "76e8522c1923b0f6049c9a2208029b2f",
+    "semantic_hash": "76e8522c1923b0f6049c9a2208029b2f"
+  },
+  "plugins/ProjectOverview/Enum/DateTypeEnum.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "7a4256e4ae95d25b4326f4632d30905e",
+    "semantic_hash": "7a4256e4ae95d25b4326f4632d30905e"
+  },
+  "plugins/ProjectOverview/Helpers/ProjectOverviewActionHandler.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "da372e4a7962f00213c73b408604a038",
+    "semantic_hash": "da372e4a7962f00213c73b408604a038"
+  },
+  "plugins/ProjectOverview/Helpers/ProjectOverviewHelper.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "6aa5abd122aa256b94bdd897005447cf",
+    "semantic_hash": "6aa5abd122aa256b94bdd897005447cf"
+  },
+  "plugins/ProjectOverview/Middleware/GetLanguageAssets.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "4a2096ca0df1997e856896f27de4c43e",
+    "semantic_hash": "4a2096ca0df1997e856896f27de4c43e"
+  },
+  "plugins/ProjectOverview/Repositories/ProjectOverview.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "aeaedcc432bf1eb421947979e3be1737",
+    "semantic_hash": "aeaedcc432bf1eb421947979e3be1737"
+  },
+  "plugins/ProjectOverview/Services/ProjectOverview.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "252039a6c6302aa2d9a024c5a7c3f876",
+    "semantic_hash": "252039a6c6302aa2d9a024c5a7c3f876"
+  },
+  "plugins/ProjectOverview/Templates/partials/newViewHelp.blade.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "52f30303c8089faf796e1a46c76dff0e",
+    "semantic_hash": "52f30303c8089faf796e1a46c76dff0e"
+  },
+  "plugins/ProjectOverview/Templates/partials/projectOverviewTable.blade.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "1746999484b6e9c1b850773e8f6cc56f",
+    "semantic_hash": "1746999484b6e9c1b850773e8f6cc56f"
+  },
+  "plugins/ProjectOverview/Templates/partials/projectOverviewTableRows.blade.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "5acfbad42af16eb8a51ae569be4b3fdc",
+    "semantic_hash": "5acfbad42af16eb8a51ae569be4b3fdc"
+  },
+  "plugins/ProjectOverview/Templates/projectOverview.blade.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "4f752926bfbb65de194ad503c0efd741",
+    "semantic_hash": "4f752926bfbb65de194ad503c0efd741"
+  },
+  "plugins/ProjectOverview/Templates/projectOverviewFilters.blade.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "a7b04f82a55640284dece2ce9a868a6f",
+    "semantic_hash": "a7b04f82a55640284dece2ce9a868a6f"
+  },
+  "plugins/ProjectOverview/assets/filters.js": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "2236484ef6841ae723c76dc8e5803879",
+    "semantic_hash": "2236484ef6841ae723c76dc8e5803879"
+  },
+  "plugins/ProjectOverview/assets/project-overview.js": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "892105793d0d0e376f0788ab527a2d3e",
+    "semantic_hash": "892105793d0d0e376f0788ab527a2d3e"
+  },
+  "plugins/ProjectOverview/assets/sidebar.js": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "0fc017aba139df3f34bebf46b2e318c8",
+    "semantic_hash": "0fc017aba139df3f34bebf46b2e318c8"
+  },
+  "plugins/ProjectOverview/composer.json": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "dfb1b51c2441585c493a13f9cf28a16e",
+    "semantic_hash": "dfb1b51c2441585c493a13f9cf28a16e"
+  },
+  "plugins/ProjectOverview/index.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "061b3ac08148ed1bb732a746e95620ce",
+    "semantic_hash": "061b3ac08148ed1bb732a746e95620ce"
+  },
+  "plugins/ProjectOverview/register.php": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "591bd153fbefeb32b1fa538f841043a7",
+    "semantic_hash": "591bd153fbefeb32b1fa538f841043a7"
+  },
+  "plugins/TaskOrganiser/Hxcontrollers/SettingsController.php": {
+    "mtime": 1790090901.020874,
+    "seen": 1790104490.6373653,
+    "ast_hash": "a18180442c166b763dad9ed494a00ba1",
+    "semantic_hash": "a18180442c166b763dad9ed494a00ba1"
+  },
+  "plugins/TaskOrganiser/Hxcontrollers/WidgetController.php": {
+    "mtime": 1790090901.024897,
+    "seen": 1790104490.6373653,
+    "ast_hash": "fd10bbdea3b9ec58c9337daef49c7922",
+    "semantic_hash": "fd10bbdea3b9ec58c9337daef49c7922"
+  },
+  "plugins/TaskOrganiser/Listeners/SettingsTab.php": {
+    "mtime": 1790090901.0360186,
+    "seen": 1790104490.6373653,
+    "ast_hash": "14d2cd75212f0bce373e23d10a00ace1",
+    "semantic_hash": "14d2cd75212f0bce373e23d10a00ace1"
+  },
+  "plugins/TaskOrganiser/Listeners/SettingsTabContent.php": {
+    "mtime": 1790090901.0396655,
+    "seen": 1790104490.6373653,
+    "ast_hash": "35b48cb7f15b04695c59402c8b99e10e",
+    "semantic_hash": "35b48cb7f15b04695c59402c8b99e10e"
+  },
+  "plugins/TaskOrganiser/Models/CachedTaskList.php": {
+    "mtime": 1790090901.0497284,
+    "seen": 1790104490.6373653,
+    "ast_hash": "70f2da5db825fa45dc3f2ad16511382d",
+    "semantic_hash": "70f2da5db825fa45dc3f2ad16511382d"
+  },
+  "plugins/TaskOrganiser/Models/SettingsIndex.php": {
+    "mtime": 1790090901.0553772,
+    "seen": 1790104490.6373653,
+    "ast_hash": "5624eabcffdb1cdeee1da83cad6118b9",
+    "semantic_hash": "5624eabcffdb1cdeee1da83cad6118b9"
+  },
+  "plugins/TaskOrganiser/Models/SettingsModel.php": {
+    "mtime": 1790090901.0594213,
+    "seen": 1790104490.6373653,
+    "ast_hash": "5fe608c9653ce19f1ecca5d406e21b2b",
+    "semantic_hash": "5fe608c9653ce19f1ecca5d406e21b2b"
+  },
+  "plugins/TaskOrganiser/Repositories/CacheRepository.php": {
+    "mtime": 1790090901.0667799,
+    "seen": 1790104490.6373653,
+    "ast_hash": "3a235c0517406ef0fd84064a303fa211",
+    "semantic_hash": "3a235c0517406ef0fd84064a303fa211"
+  },
+  "plugins/TaskOrganiser/Services/SettingsService.php": {
+    "mtime": 1790090901.0796323,
+    "seen": 1790104490.6373653,
+    "ast_hash": "784602579446871d49afe7103da237f0",
+    "semantic_hash": "784602579446871d49afe7103da237f0"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/BaseSortModule.php": {
+    "mtime": 1790090901.0995593,
+    "seen": 1790104490.6373653,
+    "ast_hash": "b864094a1428a06e077d900fbf0262b0",
+    "semantic_hash": "b864094a1428a06e077d900fbf0262b0"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/Common/ClientSortModule.php": {
+    "mtime": 1790090901.109555,
+    "seen": 1790104490.6373653,
+    "ast_hash": "ed24237f2ea9142964df0a24f66b4b86",
+    "semantic_hash": "ed24237f2ea9142964df0a24f66b4b86"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/Common/CreatedWithinSortModule.php": {
+    "mtime": 1790090901.1131105,
+    "seen": 1790104490.6373653,
+    "ast_hash": "bddcb98b0c8ce9cec7b70c6c915d5eca",
+    "semantic_hash": "bddcb98b0c8ce9cec7b70c6c915d5eca"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/Common/DueDateSortModule.php": {
+    "mtime": 1790090901.1200063,
+    "seen": 1790104490.6373653,
+    "ast_hash": "405866bbf71e2d225a9d0dc60bf53b4a",
+    "semantic_hash": "405866bbf71e2d225a9d0dc60bf53b4a"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/Common/EffortSortModule.php": {
+    "mtime": 1790090901.1286,
+    "seen": 1790104490.6373653,
+    "ast_hash": "8b2f1f97ea772a099bf38d9eb6e8df9f",
+    "semantic_hash": "8b2f1f97ea772a099bf38d9eb6e8df9f"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/Common/MilestoneSortModule.php": {
+    "mtime": 1790090901.1352763,
+    "seen": 1790104490.6373653,
+    "ast_hash": "a0fcfc213a60343f3bd379e095f1524f",
+    "semantic_hash": "a0fcfc213a60343f3bd379e095f1524f"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/Common/PrioritySortModule.php": {
+    "mtime": 1790090901.1416812,
+    "seen": 1790104490.6373653,
+    "ast_hash": "4c237cf99370286d5b6dec6057824871",
+    "semantic_hash": "4c237cf99370286d5b6dec6057824871"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/Common/ProjectSortModule.php": {
+    "mtime": 1790090901.145666,
+    "seen": 1790104490.6373653,
+    "ast_hash": "1189710e944f0b18dbcc47d2efc10b4f",
+    "semantic_hash": "1189710e944f0b18dbcc47d2efc10b4f"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/Common/StaticSortModule.php": {
+    "mtime": 1790090901.1500745,
+    "seen": 1790104490.6373653,
+    "ast_hash": "5b2908575d92262b1aa2ae071f36ea61",
+    "semantic_hash": "5b2908575d92262b1aa2ae071f36ea61"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/Common/StatusSortModule.php": {
+    "mtime": 1790090901.1535988,
+    "seen": 1790104490.6373653,
+    "ast_hash": "196946fb79ea595bf4d28b0475c6057e",
+    "semantic_hash": "196946fb79ea595bf4d28b0475c6057e"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/Common/TopNEffortSortModule.php": {
+    "mtime": 1790090901.162264,
+    "seen": 1790104490.6373653,
+    "ast_hash": "558c47b5e7d7f0d7aebb3ba229778ed2",
+    "semantic_hash": "558c47b5e7d7f0d7aebb3ba229778ed2"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/Common/TypeSortModule.php": {
+    "mtime": 1790090901.1666899,
+    "seen": 1790104490.6373653,
+    "ast_hash": "69ecb2b341f72fa615541c6b74923213",
+    "semantic_hash": "69ecb2b341f72fa615541c6b74923213"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/CustomFields/CustomFieldsBoolSortModule.php": {
+    "mtime": 1790090901.1790142,
+    "seen": 1790104490.6373653,
+    "ast_hash": "49b5f05ac1e4eb992757251c91e64cdd",
+    "semantic_hash": "49b5f05ac1e4eb992757251c91e64cdd"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/CustomFields/CustomFieldsCheckboxSortModule.php": {
+    "mtime": 1790090901.1834464,
+    "seen": 1790104490.6373653,
+    "ast_hash": "38819995e0a155377f5855be63806600",
+    "semantic_hash": "38819995e0a155377f5855be63806600"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/CustomFields/CustomFieldsRadioSortModule.php": {
+    "mtime": 1790090901.1903148,
+    "seen": 1790104490.6373653,
+    "ast_hash": "d6b2234685bd21b5b8d5cb21b8b52759",
+    "semantic_hash": "d6b2234685bd21b5b8d5cb21b8b52759"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/Plans/PlanSortModule.php": {
+    "mtime": 1790090901.2024195,
+    "seen": 1790104490.6373653,
+    "ast_hash": "e4451bde3de620f85bfd8776ad204dc1",
+    "semantic_hash": "e4451bde3de620f85bfd8776ad204dc1"
+  },
+  "plugins/TaskOrganiser/Services/SortModules/Strategies/StrategySortModule.php": {
+    "mtime": 1790090901.2127516,
+    "seen": 1790104490.6373653,
+    "ast_hash": "8295e2dd27e3dbcb638d22a515f53954",
+    "semantic_hash": "8295e2dd27e3dbcb638d22a515f53954"
+  },
+  "plugins/TaskOrganiser/Services/SortingService.php": {
+    "mtime": 1790090901.083066,
+    "seen": 1790104490.6373653,
+    "ast_hash": "53ecf8a068b9258ffee54c09bb2a5ec1",
+    "semantic_hash": "53ecf8a068b9258ffee54c09bb2a5ec1"
+  },
+  "plugins/TaskOrganiser/Services/TaskOrganiser.php": {
+    "mtime": 1790090901.0907953,
+    "seen": 1790104490.6373653,
+    "ast_hash": "29a41ab909828acdd4db68bcbecce13a",
+    "semantic_hash": "29a41ab909828acdd4db68bcbecce13a"
+  },
+  "plugins/TaskOrganiser/Templates/partials/settings.blade.php": {
+    "mtime": 1790090901.2280035,
+    "seen": 1790104490.6373653,
+    "ast_hash": "a4f9ed14c7995f0a053cb4f3fe83bc83",
+    "semantic_hash": "a4f9ed14c7995f0a053cb4f3fe83bc83"
+  },
+  "plugins/TaskOrganiser/Templates/partials/settingsContainer.blade.php": {
+    "mtime": 1790090901.2327478,
+    "seen": 1790104490.6373653,
+    "ast_hash": "3442d65c048657b1d017dd776b3d4a90",
+    "semantic_hash": "3442d65c048657b1d017dd776b3d4a90"
+  },
+  "plugins/TaskOrganiser/Templates/partials/widget.blade.php": {
+    "mtime": 1790090901.2381425,
+    "seen": 1790104490.6373653,
+    "ast_hash": "81d6083433673ede64f236c560316403",
+    "semantic_hash": "81d6083433673ede64f236c560316403"
+  },
+  "plugins/TaskOrganiser/composer.json": {
+    "mtime": 1790090901.000883,
+    "seen": 1790104490.6373653,
+    "ast_hash": "b3a2b42d4be06a62f84d91eaab078c8c",
+    "semantic_hash": "b3a2b42d4be06a62f84d91eaab078c8c"
+  },
+  "plugins/TaskOrganiser/index.php": {
+    "mtime": 1790090901.0081785,
+    "seen": 1790104490.6373653,
+    "ast_hash": "223f126268161e7dc1a61a007f2e0f3e",
+    "semantic_hash": "223f126268161e7dc1a61a007f2e0f3e"
+  },
+  "plugins/TaskOrganiser/register.php": {
+    "mtime": 1790090901.0125906,
+    "seen": 1790104490.6373653,
+    "ast_hash": "90b0adca475d9ff165a797677c7ef0d8",
+    "semantic_hash": "90b0adca475d9ff165a797677c7ef0d8"
+  },
+  "plugins/TicketTemplate/Controllers/CreateTemplate.php": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "1aa172719612a5588ff40396d152bf4c",
+    "semantic_hash": "1aa172719612a5588ff40396d152bf4c"
+  },
+  "plugins/TicketTemplate/Controllers/DeleteTemplate.php": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "61662d2a6fb555159bed4a3a13b95760",
+    "semantic_hash": "61662d2a6fb555159bed4a3a13b95760"
+  },
+  "plugins/TicketTemplate/Controllers/ListTemplates.php": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "693c0e77c11dc8e47b41ecb1d78a0dcc",
+    "semantic_hash": "693c0e77c11dc8e47b41ecb1d78a0dcc"
+  },
+  "plugins/TicketTemplate/Controllers/Settings.php": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "fe1e191ccc88b5fde9a5d4d37aec8af5",
+    "semantic_hash": "fe1e191ccc88b5fde9a5d4d37aec8af5"
+  },
+  "plugins/TicketTemplate/Controllers/UpdateTemplate.php": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "dc118fb234df0480620eabbd63ef1698",
+    "semantic_hash": "dc118fb234df0480620eabbd63ef1698"
+  },
+  "plugins/TicketTemplate/Repository/TicketTemplateRepository.php": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "011655bdfbfe8026a1089b2275799dfd",
+    "semantic_hash": "011655bdfbfe8026a1089b2275799dfd"
+  },
+  "plugins/TicketTemplate/Services/TicketTemplate.php": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "70d5f2c0e457d5c7f676c56a3941ea78",
+    "semantic_hash": "70d5f2c0e457d5c7f676c56a3941ea78"
+  },
+  "plugins/TicketTemplate/Templates/createTemplate.blade.php": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "fbcbe19f465531be76188ae5649912ec",
+    "semantic_hash": "fbcbe19f465531be76188ae5649912ec"
+  },
+  "plugins/TicketTemplate/Templates/deleteTemplate.blade.php": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "e4bc84e40a9113ec6f698941b75a7014",
+    "semantic_hash": "e4bc84e40a9113ec6f698941b75a7014"
+  },
+  "plugins/TicketTemplate/Templates/listTemplates.blade.php": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "bad3a13f3efc67e84171959f31064e1a",
+    "semantic_hash": "bad3a13f3efc67e84171959f31064e1a"
+  },
+  "plugins/TicketTemplate/Templates/settings.blade.php": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "336f2b77b9bf457e2c4fcea59567d024",
+    "semantic_hash": "336f2b77b9bf457e2c4fcea59567d024"
+  },
+  "plugins/TicketTemplate/Templates/updateTemplate.blade.php": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "ae2beefa867843f9f0f6fc038d010f37",
+    "semantic_hash": "ae2beefa867843f9f0f6fc038d010f37"
+  },
+  "plugins/TicketTemplate/bin/create-release": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "b81504d247c129f3184e721bcad52b63",
+    "semantic_hash": "b81504d247c129f3184e721bcad52b63"
+  },
+  "plugins/TicketTemplate/composer.json": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "2e60e7a13c4b4e31e3c48ddf85148151",
+    "semantic_hash": "2e60e7a13c4b4e31e3c48ddf85148151"
+  },
+  "plugins/TicketTemplate/register.php": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "c9dd1f0e29f640e5eae4910203e5ba3d",
+    "semantic_hash": "c9dd1f0e29f640e5eae4910203e5ba3d"
+  },
+  "plugins/TimeTable/Controllers/Settings.php": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "add0cd03ebd2bed37c9873be03972170",
+    "semantic_hash": "add0cd03ebd2bed37c9873be03972170"
+  },
+  "plugins/TimeTable/Controllers/TimeTable.php": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "3971a7f8673a14e42db0b7a25cc26294",
+    "semantic_hash": "3971a7f8673a14e42db0b7a25cc26294"
+  },
+  "plugins/TimeTable/DTO/TicketContextMenuDTO.php": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "3be43cab3d9647db7574a493bbff6f56",
+    "semantic_hash": "3be43cab3d9647db7574a493bbff6f56"
+  },
+  "plugins/TimeTable/DTO/WorklogDTO.php": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "ad90316cae82c4d0423cced2760ff9bd",
+    "semantic_hash": "ad90316cae82c4d0423cced2760ff9bd"
+  },
+  "plugins/TimeTable/Helpers/TimeTableActionHandler.php": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "4128a3d066dd8d0586acded9a999b444",
+    "semantic_hash": "4128a3d066dd8d0586acded9a999b444"
+  },
+  "plugins/TimeTable/Helpers/TimeTableHelper.php": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "b28e00e1714c2d8c354c29ecbbd2cb83",
+    "semantic_hash": "b28e00e1714c2d8c354c29ecbbd2cb83"
+  },
+  "plugins/TimeTable/Middleware/GetLanguageAssets.php": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "c2b778664ada11c6ef230b79d1985f84",
+    "semantic_hash": "c2b778664ada11c6ef230b79d1985f84"
+  },
+  "plugins/TimeTable/Repositories/TimeTable.php": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "0f4c2af8b2b1a89677cd3d7d0cf684c1",
+    "semantic_hash": "0f4c2af8b2b1a89677cd3d7d0cf684c1"
+  },
+  "plugins/TimeTable/Services/TimeTable.php": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "0700e3a1a769c2d25d62e15ed71a6eb5",
+    "semantic_hash": "0700e3a1a769c2d25d62e15ed71a6eb5"
+  },
+  "plugins/TimeTable/Templates/settings.blade.php": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "4b759d30c90b9e98d9079bf6aa4eae91",
+    "semantic_hash": "4b759d30c90b9e98d9079bf6aa4eae91"
+  },
+  "plugins/TimeTable/Templates/timetable.blade.php": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "06e621659808f1eb8289f7da1de3bb40",
+    "semantic_hash": "06e621659808f1eb8289f7da1de3bb40"
+  },
+  "plugins/TimeTable/assets/timeTable.js": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "024c344c10d8d2f43a850ec0dd3bc00e",
+    "semantic_hash": "024c344c10d8d2f43a850ec0dd3bc00e"
+  },
+  "plugins/TimeTable/assets/timeTableApiHandler.js": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "c8fd1891c772653d0bb735147a064c0d",
+    "semantic_hash": "c8fd1891c772653d0bb735147a064c0d"
+  },
+  "plugins/TimeTable/composer.json": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "a1c202dcd518537d53cdf8717122cc11",
+    "semantic_hash": "a1c202dcd518537d53cdf8717122cc11"
+  },
+  "plugins/TimeTable/index.php": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "061b3ac08148ed1bb732a746e95620ce",
+    "semantic_hash": "061b3ac08148ed1bb732a746e95620ce"
+  },
+  "plugins/TimeTable/register.php": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "620e5da449c24e040c040015437c458b",
+    "semantic_hash": "620e5da449c24e040c040015437c458b"
+  },
+  "plugins/Whiteboards/Controllers/Create.php": {
+    "mtime": 1790101901.677214,
+    "seen": 1790104490.6373653,
+    "ast_hash": "322bfe4c15d4f8600020cc971a42396f",
+    "semantic_hash": "322bfe4c15d4f8600020cc971a42396f"
+  },
+  "plugins/Whiteboards/Controllers/Delete.php": {
+    "mtime": 1790101901.6827126,
+    "seen": 1790104490.6373653,
+    "ast_hash": "3837ceaa219524b3601270cd587ebd78",
+    "semantic_hash": "3837ceaa219524b3601270cd587ebd78"
+  },
+  "plugins/Whiteboards/Controllers/Rename.php": {
+    "mtime": 1790101901.688223,
+    "seen": 1790104490.6373653,
+    "ast_hash": "c20d0609c322e7cf8a64675e9c1a73fc",
+    "semantic_hash": "c20d0609c322e7cf8a64675e9c1a73fc"
+  },
+  "plugins/Whiteboards/Controllers/Save.php": {
+    "mtime": 1790101901.6932247,
+    "seen": 1790104490.6373653,
+    "ast_hash": "1dda6f9b302d219ab0e30ec91a59b26b",
+    "semantic_hash": "1dda6f9b302d219ab0e30ec91a59b26b"
+  },
+  "plugins/Whiteboards/Controllers/ShowAll.php": {
+    "mtime": 1790101901.6967294,
+    "seen": 1790104490.6373653,
+    "ast_hash": "00b0e6bfc09e066558ec64aab2399b38",
+    "semantic_hash": "00b0e6bfc09e066558ec64aab2399b38"
+  },
+  "plugins/Whiteboards/Controllers/ShowWhiteboard.php": {
+    "mtime": 1790101901.7027407,
+    "seen": 1790104490.6373653,
+    "ast_hash": "07d48510cf1cd50a42ac4510d04bbdad",
+    "semantic_hash": "07d48510cf1cd50a42ac4510d04bbdad"
+  },
+  "plugins/Whiteboards/Js/whiteboardController.js": {
+    "mtime": 1790101901.7122586,
+    "seen": 1790104490.6373653,
+    "ast_hash": "423c84ddb0da3bb5a2b9c49b6d92b155",
+    "semantic_hash": "423c84ddb0da3bb5a2b9c49b6d92b155"
+  },
+  "plugins/Whiteboards/Middleware/GetLanguageAssets.php": {
+    "mtime": 1790101901.7298212,
+    "seen": 1790104490.6373653,
+    "ast_hash": "0ac2753dc4ed63ba99c911baf922da8c",
+    "semantic_hash": "0ac2753dc4ed63ba99c911baf922da8c"
+  },
+  "plugins/Whiteboards/Models/Whiteboard.php": {
+    "mtime": 1790101901.7393441,
+    "seen": 1790104490.6373653,
+    "ast_hash": "e40a767da60fd31f897b88d8dc87b687",
+    "semantic_hash": "e40a767da60fd31f897b88d8dc87b687"
+  },
+  "plugins/Whiteboards/Repositories/WhiteboardRepository.php": {
+    "mtime": 1790101901.7478497,
+    "seen": 1790104490.6373653,
+    "ast_hash": "4276a21baec4b69cd0e60500a5be98fb",
+    "semantic_hash": "4276a21baec4b69cd0e60500a5be98fb"
+  },
+  "plugins/Whiteboards/Services/Whiteboards.php": {
+    "mtime": 1790101901.7571428,
+    "seen": 1790104490.6373653,
+    "ast_hash": "968b3d66d9b5ad59849fa5893f17c1b4",
+    "semantic_hash": "968b3d66d9b5ad59849fa5893f17c1b4"
+  },
+  "plugins/Whiteboards/Templates/partials/whiteboardCard.blade.php": {
+    "mtime": 1790101901.7807002,
+    "seen": 1790104490.6373653,
+    "ast_hash": "07889b3176efe86e2ad134860c471991",
+    "semantic_hash": "07889b3176efe86e2ad134860c471991"
+  },
+  "plugins/Whiteboards/Templates/showAll.blade.php": {
+    "mtime": 1790101901.7661579,
+    "seen": 1790104490.6373653,
+    "ast_hash": "154572534d5af816512eb1af23f6eef3",
+    "semantic_hash": "154572534d5af816512eb1af23f6eef3"
+  },
+  "plugins/Whiteboards/Templates/showWhiteboard.blade.php": {
+    "mtime": 1790101901.7716792,
+    "seen": 1790104490.6373653,
+    "ast_hash": "869d7907e66846ba864dfe99f1dd86fe",
+    "semantic_hash": "869d7907e66846ba864dfe99f1dd86fe"
+  },
+  "plugins/Whiteboards/composer.json": {
+    "mtime": 1790101901.6661942,
+    "seen": 1790104490.6373653,
+    "ast_hash": "ddbc396e82c94557200a5a85a487ae72",
+    "semantic_hash": "ddbc396e82c94557200a5a85a487ae72"
+  },
+  "plugins/Whiteboards/register.php": {
+    "mtime": 1790101901.669706,
+    "seen": 1790104490.6373653,
+    "ast_hash": "970bd4900d18ab2d4b1bb3d2a2704015",
+    "semantic_hash": "970bd4900d18ab2d4b1bb3d2a2704015"
+  },
+  "start.sh": {
+    "mtime": 1790013237.3116553,
+    "seen": 1790104490.6373653,
+    "ast_hash": "c3d67e843890f4e0de021cc8085f20b4",
+    "semantic_hash": "c3d67e843890f4e0de021cc8085f20b4"
+  },
+  ".github/FUNDING.yml": {
+    "mtime": 1790013237.3036041,
+    "seen": 1790104490.6373653,
+    "ast_hash": "17c953505d4797c89cc70856f440adf8",
+    "semantic_hash": "17c953505d4797c89cc70856f440adf8"
+  },
+  ".github/workflows/docker-publish.yml": {
+    "mtime": 1790013237.305102,
+    "seen": 1790104490.6373653,
+    "ast_hash": "ca95ba3bdb7c3290cda6db36135a15b5",
+    "semantic_hash": "ca95ba3bdb7c3290cda6db36135a15b5"
+  },
+  "README.md": {
+    "mtime": 1790013237.3091488,
+    "seen": 1790104490.6373653,
+    "ast_hash": "230e0e786bc56d2efb0c567a535d7989",
+    "semantic_hash": "230e0e786bc56d2efb0c567a535d7989"
+  },
+  "docker-compose.yml": {
+    "mtime": 1790098726.2246203,
+    "seen": 1790104490.6373653,
+    "ast_hash": "92e51619d79987186a6a00cff6d61284",
+    "semantic_hash": "92e51619d79987186a6a00cff6d61284"
+  },
+  "plugins/APIData/CHANGELOG.md": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "c8a48856b0ebebfa7e63ec4b86744fc2",
+    "semantic_hash": "c8a48856b0ebebfa7e63ec4b86744fc2"
+  },
+  "plugins/APIData/README.md": {
+    "mtime": 1787315686.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "8125c77110cfdb3b07ebaeafaf9531e3",
+    "semantic_hash": "8125c77110cfdb3b07ebaeafaf9531e3"
+  },
+  "plugins/CopyTicketLink/README.md": {
+    "mtime": 1780043656.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "3daccfa3d7fbeeafa4de0d58a1ad89f0",
+    "semantic_hash": "3daccfa3d7fbeeafa4de0d58a1ad89f0"
+  },
+  "plugins/OmniSearch/CHANGELOG.md": {
+    "mtime": 1783538547.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "8650143de166dfa3006fd342b0c01264",
+    "semantic_hash": "8650143de166dfa3006fd342b0c01264"
+  },
+  "plugins/OmniSearch/README.md": {
+    "mtime": 1783538547.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "242d7614608f4aa8036fa390db129d23",
+    "semantic_hash": "242d7614608f4aa8036fa390db129d23"
+  },
+  "plugins/OmniSearch/Taskfile.yml": {
+    "mtime": 1783538547.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "105a19ace49af1f15223e641de6bbbcf",
+    "semantic_hash": "105a19ace49af1f15223e641de6bbbcf"
+  },
+  "plugins/ProjectOverview/CHANGELOG.md": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "910caff051a1dd881fc1c8311edbbf1e",
+    "semantic_hash": "910caff051a1dd881fc1c8311edbbf1e"
+  },
+  "plugins/ProjectOverview/README.md": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "c6fb5e8173e05f4578b0d2be9cd800e1",
+    "semantic_hash": "c6fb5e8173e05f4578b0d2be9cd800e1"
+  },
+  "plugins/ProjectOverview/Taskfile.yml": {
+    "mtime": 1783538587.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "273bb7c45de56916bc50f55133d83d55",
+    "semantic_hash": "273bb7c45de56916bc50f55133d83d55"
+  },
+  "plugins/TicketTemplate/CHANGELOG.md": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "7a17822aeaa7c5eebef113d4d3c5f415",
+    "semantic_hash": "7a17822aeaa7c5eebef113d4d3c5f415"
+  },
+  "plugins/TicketTemplate/README.md": {
+    "mtime": 1787562248.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "6ab2b02d430299cca4686f6b52f43a3c",
+    "semantic_hash": "6ab2b02d430299cca4686f6b52f43a3c"
+  },
+  "plugins/TimeTable/CHANGELOG.md": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "08b1328c31652b2026cd31f9b1825bc6",
+    "semantic_hash": "08b1328c31652b2026cd31f9b1825bc6"
+  },
+  "plugins/TimeTable/DOCUMENTATION.md": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "de2b85ef5c3abc131c19e2d17d57aa84",
+    "semantic_hash": "de2b85ef5c3abc131c19e2d17d57aa84"
+  },
+  "plugins/TimeTable/README.md": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "12239bd4ab89d00ad434ed6b7d39eb5a",
+    "semantic_hash": "12239bd4ab89d00ad434ed6b7d39eb5a"
+  },
+  "plugins/TimeTable/Taskfile.yml": {
+    "mtime": 1787570520.0,
+    "seen": 1790104490.6373653,
+    "ast_hash": "d37ec5da83d2c6dd801c564f87d26556",
+    "semantic_hash": "d37ec5da83d2c6dd801c564f87d26556"
+  },
+  "plugins/Whiteboards/README.md": {
+    "mtime": 1790101901.6611934,
+    "seen": 1790104490.6373653,
+    "ast_hash": "a13991e1dfeab89ada81b213d7710b49",
+    "semantic_hash": "a13991e1dfeab89ada81b213d7710b49"
+  },
+  ".codex/hooks.json": {
+    "mtime": 1790104677.9619348,
+    "seen": 1790107168.4544647,
+    "ast_hash": "43bf8422f776124ea3aa5f23a58f7d24",
+    "semantic_hash": ""
+  },
+  "plugins_setup.sh": {
+    "mtime": 1790107212.2956233,
+    "seen": 1790107230.6029763,
+    "ast_hash": "bcdbd0914a6e42fc2ba96ddeabb53889",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1790104677.9567971,
+    "seen": 1790107168.4544647,
+    "ast_hash": "21ceb6533048be51308e69e7b74a35cf",
+    "semantic_hash": ""
+  },
+  "plugins/CopyTicketLink/CHANGELOG.md": {
+    "mtime": 1780043656.0,
+    "seen": 1790107168.4544647,
+    "ast_hash": "c504e1633d0a0021bdfe72e148795732",
+    "semantic_hash": ""
+  },
+  "plugins/TicketTemplate/Taskfile.yml": {
+    "mtime": 1787562248.0,
+    "seen": 1790107168.4544647,
+    "ast_hash": "bba068e136b504f44543d722887a95a2",
+    "semantic_hash": ""
+  }
+}

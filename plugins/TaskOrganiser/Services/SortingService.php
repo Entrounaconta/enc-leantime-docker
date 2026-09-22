@@ -1,0 +1,294 @@
+<?php
+
+namespace Leantime\Plugins\TaskOrganiser\Services;
+
+use Leantime\Domain\Tickets\Services\Tickets as TicketService;
+use Leantime\Domain\Tickets\Models\Tickets as TicketModel;
+use Leantime\Plugins\TaskOrganiser\Models\SettingsModel;
+use Leantime\Plugins\TaskOrganiser\Models\SettingsIndex;
+use Leantime\Plugins\TaskOrganiser\Models\CachedTaskList;
+use Leantime\Plugins\TaskOrganiser\Repositories\CacheRepository;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\Common\BaseSortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\Common\StatusSortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\Common\PrioritySortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\Common\ClientSortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\Common\DueDateSortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\Common\EffortSortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\Common\TopNEffortSortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\Common\ProjectSortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\Common\MilestoneSortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\Common\CreatedWithinSortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\Common\TypeSortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\Common\StaticSortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\CustomFields\CustomFieldsRadioSortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\CustomFields\CustomFieldsBoolSortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\CustomFields\CustomFieldsCheckboxSortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\Strategies\StrategySortModule;
+use Leantime\Plugins\TaskOrganiser\Services\SortModules\Plans\PlanSortModule;
+use Leantime\Domain\Projects\Services\Projects as ProjectService;
+use Leantime\Plugins\TaskOrganiser\Services\SettingsService;
+use Leantime\Domain\Plugins\Services\Plugins as PluginsManager;
+use Leantime\Core\Configuration\Environment;
+use Leantime\Core\Db\Db;
+use Leantime\Core\Language;
+
+class SortingService
+{
+    private TicketService $ticketsService;
+    private SettingsService $settingsService;
+    private ProjectService $projectsService;
+    private PluginsManager $pluginsManager;
+    
+    private CacheRepository $cacheRepository;
+
+    private Db $db;
+    private Environment $config;
+    private Language $language;
+
+    public function __construct(
+        TicketService $ticketsService,
+        SettingsService $settingsService,
+        ProjectService $projectsService,
+        CacheRepository $cacheRepository,
+        Db $db,
+        Environment $config,
+        Language $language,
+        PluginsManager $pluginsManager,
+    ) {
+        $this->ticketsService = $ticketsService;
+        $this->settingsService = $settingsService;
+        $this->projectsService = $projectsService;
+        $this->cacheRepository = $cacheRepository;
+        $this->pluginsManager = $pluginsManager;
+        $this->db = $db;
+        $this->config = $config;
+        $this->language = $language;
+    }
+
+    /**
+     * Reset the cache for a specific user and a specific task list
+     * @api
+     */
+    public function ClearCache(string $id, string $userId) {
+        $cacheKey = "user.{$userId}.{$id}";
+        $this->cacheRepository->deleteCache($cacheKey);
+    }
+
+    /**
+     * Calculate all the task lists for a user
+     * @api
+     */
+    public function Calculate(string $userId) : array {
+        $searchCriteria = array(
+            "type"=>"task,subtask,bug",
+            "users"=>$userId
+        );
+        $tasks = $this->ticketsService->getAll($searchCriteria);
+        $settings = $this->GetSettings($userId);
+
+        $tickets = array();
+
+        $date_utc = new \DateTime('now', new \DateTimeZone('UTC'));
+
+        foreach($settings->indexes as $setting){
+            $targetTasks = array_filter(
+                $tasks, 
+                function($v) use ($setting){
+                    if ($setting->includetasks && $v['type'] == "task")
+                        return true;
+                    if ($setting->includesubtasks && $v['type'] == "subtask")
+                        return true;
+                    if ($setting->includebugs && $v['type'] == "bug")
+                        return true;
+                    return false;
+            });
+
+            // Check cache for existing
+            $hasExpired = true;
+            $cacheKey = "user.{$userId}.{$setting->id}";
+            if ($setting->persistency > 0){
+                $cache = $this->cacheRepository->getCache($cacheKey);
+                if ($cache){
+                    $expires = new \DateTime($cache->expires, new \DateTimeZone('UTC'));
+                    if ($expires > $date_utc)
+                    {
+                        $cacheTasks = json_decode($cache->tasklist);
+                        $targetTasks = array_filter(
+                            $targetTasks, 
+                            function($value) use ($cacheTasks) { 
+                                return in_array((string)$value['id'], $cacheTasks); 
+                            }
+                        );
+                        $hasExpired = false;
+                    }
+                }
+            }
+            
+            $newList = $this->CalculateTaskList($targetTasks, $setting);
+            $tickets[$setting->id] = array_filter($newList, function($v){ return $v->weight >= 0; });
+
+            // Save cache
+            if ($setting->persistency > 0) {
+                $newCache = new CachedTaskList();
+                $newCache->id = $cacheKey;
+                if($hasExpired){
+                    $date_utc_modified = (clone $date_utc)->add(new \DateInterval("PT{$setting->persistency}H"));
+                    $newCache->expires = $date_utc_modified->format('c');
+                }
+                else {
+                    $cache = $this->cacheRepository->getCache($cacheKey);
+                    $newCache->expires = $cache->expires;
+                }
+                $newCache->tasklist = json_encode(array_map(function ($v) { return $v->id; }, $newList));
+                $this->cacheRepository->addCache($newCache);
+            }
+        }
+
+        return $tickets;
+    }
+
+    private function CalculateTaskList(array $tasks, object $setting){
+        $settingResult = [];
+        foreach($tasks as $task){
+            $newTask = new TicketModel($task);
+            $weight = 0;
+            foreach($setting->modules as $module)
+                $weight += $module->Calculate($newTask);
+            $newTask->weight = $weight;
+
+            array_push($settingResult, $newTask);
+        }
+        usort($settingResult, function ($a, $b) {
+            return $b->weight - $a->weight;
+        });
+        return array_slice($settingResult, 0, $setting->maxtasks);
+    }
+
+    public function GetCacheExpirations(string $userId) : array {
+        $settings = $this->settingsService->GetSettingsIndex($userId);
+
+        $expirations = [];
+
+        foreach($settings->indexes as $setting){
+            $cacheKey = "user.{$userId}.{$setting->id}";
+            if ($setting->persistency > 0){
+                $cache = $this->cacheRepository->getCache($cacheKey);
+                if ($cache){
+                    $expirations[$setting->id] = $cache->expires;
+                }
+                else
+                    $expirations[$setting->id] = "Always";
+            }
+            else
+                $expirations[$setting->id] = "Always";
+        }
+
+        return $expirations;
+    }
+
+    private function GetSettings($userId) : SettingsIndex {
+        $settings = $this->settingsService->GetSettingsIndex($userId);
+        $enabledPlugins = $this->getEnabledPlugins();
+
+        foreach($settings->indexes as $setting){
+            $moduleSettings = $setting->modules;
+            $setting->modules = [];
+            if ($moduleSettings != null){
+                foreach($moduleSettings as $moduleSetting){
+                    switch($moduleSetting->type){
+                        // Common
+                        case 'status':
+                            if ($this->isPluginEnalbed($enabledPlugins, "common"))
+                                array_push($setting->modules, new StatusSortModule($moduleSetting, $this->projectsService, $this->ticketsService));
+                            break;
+                        case 'priority':
+                            if ($this->isPluginEnalbed($enabledPlugins, "common"))
+                                array_push($setting->modules, new PrioritySortModule($moduleSetting));
+                            break;
+                        case 'client':
+                            if ($this->isPluginEnalbed($enabledPlugins, "common"))
+                                array_push($setting->modules, new ClientSortModule($moduleSetting));
+                            break;
+                        case 'project':
+                            if ($this->isPluginEnalbed($enabledPlugins, "common"))
+                                array_push($setting->modules, new ProjectSortModule($moduleSetting, $this->projectsService));
+                            break;
+                        case 'duedate':
+                            if ($this->isPluginEnalbed($enabledPlugins, "common"))
+                                array_push($setting->modules, new DueDateSortModule($moduleSetting));
+                            break;
+                        case 'effort':
+                            if ($this->isPluginEnalbed($enabledPlugins, "common"))
+                                array_push($setting->modules, new EffortSortModule($moduleSetting));
+                            break;
+                        case 'milestone':
+                            if ($this->isPluginEnalbed($enabledPlugins, "common"))
+                                array_push($setting->modules, new MilestoneSortModule($moduleSetting, $this->ticketsService, $this->projectsService));
+                            break;
+                        case 'topneffort':
+                            if ($this->isPluginEnalbed($enabledPlugins, "common"))
+                                array_push($setting->modules, new TopNEffortSortModule($moduleSetting));
+                            break;
+                        case 'createdwithin':
+                            if ($this->isPluginEnalbed($enabledPlugins, "common"))
+                                array_push($setting->modules, new CreatedWithinSortModule($moduleSetting));
+                            break;
+                        case 'type':
+                            if ($this->isPluginEnalbed($enabledPlugins, "common"))
+                                array_push($setting->modules, new TypeSortModule($moduleSetting));
+                            break;
+                        case 'static':
+                            if ($this->isPluginEnalbed($enabledPlugins, "common"))
+                                array_push($setting->modules, new StaticSortModule($moduleSetting));
+                            break;
+
+                        // Custom fields
+                        case 'customfields_radio':
+                            if ($this->isPluginEnalbed($enabledPlugins, "customfields"))
+                                array_push($setting->modules, new CustomFieldsRadioSortModule($this->db, $this->config, $moduleSetting));
+                            break;
+                        case 'customfields_bool':
+                            if ($this->isPluginEnalbed($enabledPlugins, "customfields"))
+                                array_push($setting->modules, new CustomFieldsBoolSortModule($this->db, $this->config, $moduleSetting));
+                            break;
+                        case 'customfields_checkbox':
+                            if ($this->isPluginEnalbed($enabledPlugins, "customfields"))
+                                array_push($setting->modules, new CustomFieldsCheckboxSortModule($this->db, $this->config, $moduleSetting));
+                            break;
+
+                        // Strategies
+                        case 'strategies_strategy':
+                            if ($this->isPluginEnalbed($enabledPlugins, "strategies"))
+                                array_push($setting->modules, new StrategySortModule($this->db, $this->config, $this->language, $moduleSetting));
+                            break;
+
+                        // Plans
+                        case 'plans_plan':
+                            if ($this->isPluginEnalbed($enabledPlugins, "plans"))
+                                array_push($setting->modules, new PlanSortModule($this->db, $this->config, $this->language, $moduleSetting));
+                            break;
+                    }
+                }
+            }
+        }
+
+        return $settings;
+    }
+
+    private function getEnabledPlugins() : array{
+        $allEnabledPlugins = array_column(array_filter($this->pluginsManager->getEnabledPlugins(), function($v) {
+            return $v->enabled;
+        }), 'name');
+        $availableplugins = array(
+            "common" => true,
+            "customfields" => in_array("Custom Fields", $allEnabledPlugins),
+            "strategies" => in_array("Leantime Strategies", $allEnabledPlugins),
+            "plans" => in_array("Program Plans", $allEnabledPlugins)
+        );
+        return $availableplugins;
+    }
+
+    private function isPluginEnalbed(array $availableplugins, string $key) : bool{
+        return array_key_exists($key, $availableplugins) && $availableplugins[$key];
+    }
+}

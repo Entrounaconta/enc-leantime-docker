@@ -1,0 +1,275 @@
+# Changelog
+
+## [Unreleased]
+
+## [4.3.3] - 2026-08-24
+
+* [PR-89](https://github.com/ITK-Leantime/leantime-timetable/pull/89)
+  Fix fatal error in generateWeekDates when the user language is missing from
+  the session. Removes the weekday name filter it relied on, which never
+  excluded a day.
+
+## [4.3.2] - 2026-07-08
+
+* [PR-87](https://github.com/ITK-Leantime/leantime-timetable/pull/87)
+  Fix issue with search dropdown placement.
+
+## [4.3.1] - 2026-07-07
+
+* [PR-85](https://github.com/ITK-Leantime/leantime-timetable/pull/85)
+  Align taskfile.
+
+## [4.3.0] - 2026-07-07
+
+* [PR-83](https://github.com/ITK-Leantime/leantime-timetable/pull/83)
+  Scaffolding normalization: streamlined Taskfile, audit ignore, build task.
+
+## [4.2.1] - 2026-01-22
+
+* [PR-81](https://github.com/ITK-Leantime/leantime-timetable/pull/81)
+  Fix release scripts
+
+## [4.2.0] - 2026-01-22
+
+* [PR-52](https://github.com/ITK-Leantime/leantime-timetable/pull/52)
+  Context menu and various improvements.
+
+## [4.1.7] - 2025-12-08
+
+* [PR-77](https://github.com/ITK-Leantime/leantime-timetable/pull/77)
+  Use DTO when copying worklog forward.
+
+## [4.1.6] - 2025-12-05
+
+* [PR-74](https://github.com/ITK-Leantime/leantime-timetable/pull/74)
+  Saving all values from worklogDTO in database.
+
+## [4.1.5] - 2025-07-28
+
+* [PR-70](https://github.com/ITK-Leantime/leantime-timetable/pull/70)
+  New ticket status based on project config
+
+## [4.1.4] - 2025-07-02
+
+* [PR-63](https://github.com/ITK-Leantime/leantime-timetable/pull/63)
+  Hotfix: parse hoursLeft as float
+  
+## [4.1.3] - 2025-06-27
+
+* [PR-61](https://github.com/ITK-Leantime/leantime-timetable/pull/61)
+  Correct hours-remaining value
+
+## [4.1.2] - 2025-06-27
+
+* [PR-59](https://github.com/ITK-Leantime/leantime-timetable/pull/59)
+  Fixed how hours-remaining is displayed
+
+## [4.1.1] - 2025-05-07
+
+* [PR-55](https://github.com/ITK-Leantime/leantime-timetable/pull/55)
+  Re-add ticket sorting when opening ticket search
+
+## [4.1.0] - 2025-05-06
+
+* [PR-53](https://github.com/ITK-Leantime/leantime-timetable/pull/53)
+  Added DTO to preserve data integrity for worklogs
+  Improved error handling and visualization hereof
+
+## [4.0.1] - 2025-04-03
+
+* [PR-50](https://github.com/ITK-Leantime/leantime-timetable/pull/50)
+  Added missing manageAsUserId value for copyEntryForward form
+  Added loader blocker for popups when system is fetching tickets
+
+## [4.0.0] - 2025-03-28
+
+* [PR-48](https://github.com/ITK-Leantime/leantime-timetable/pull/48)
+  Remove dist from gitignore to make build script work
+
+* [PR-44](https://github.com/ITK-Leantime/leantime-timetable/pull/44)
+  * Update changelog
+  * Add new markdown lint
+  * Update leantime to 3.4.3
+
+## [3.5.0] - 2025-02-17
+
+* [PR-41](https://github.com/ITK-Leantime/leantime-timetable/pull/41)
+  * Introduced cross user management for admins and above
+
+## [3.4.0] - 2025-01-29
+
+* [PR-39](https://github.com/ITK-Leantime/leantime-timetable/pull/39)
+  * Require timelog comments via settings
+
+## [3.3.0] - 2025-01-17
+
+* [PR-37](https://github.com/ITK-Leantime/leantime-timetable/pull/37)
+  * Reimplement ability to move timelog to another date
+
+## [3.2.0] - 2025-01-15
+
+* [PR-35](https://github.com/ITK-Leantime/leantime-timetable/pull/35)
+  * Sort away tickets with status DONE
+
+## [3.1.0] - 2025-01-14
+
+* [PR-33](https://github.com/ITK-Leantime/leantime-timetable/pull/33)
+  * Made weekends optional when copying an entry forward
+  * Enter now submits the entry when creating or editing
+  * Now only updating frontend when deleting timelog
+
+## [3.0.0] - 2025-01-10
+
+* [PR-31](https://github.com/ITK-Leantime/leantime-timetable/pull/31)
+  * Introduced fromDate and toDate, enabling setting (-x day and +x day) as params for relative dynamic urls.
+  * Introduced FlatPickr for date range selection
+  * Unlocked range of displayed days at one time
+  * Overhauled post handling
+  * Added ticket type to dropdown
+  * Fixed issue where tickets were not sorted correctly
+  * Worked on better displaying that the tickets are being synced on load
+  * Removed "add timelog" button
+  * Locked save button and show spinner on click
+  * Implemented overflow-scroll behaviour when selecting many days
+  * Redesigned modal to popup at clicked cell
+  * Implemented copy forward functionality
+  * Added option to overwrite already filled fields when copying forward
+  * Fixed issue when adding new todo
+
+## [2.0.2] - 2024-10-24
+
+* [PR-29](https://github.com/ITK-Leantime/leantime-timetable/pull/29)
+  * Fixed user specificity in timetable update sql
+
+## [2.0.1] - 2024-10-23
+
+* [PR-27](https://github.com/ITK-Leantime/leantime-timetable/pull/27)
+  * Fixed build process and script
+
+## [2.0.0] - 2024-10-22
+
+* [PR-25](https://github.com/ITK-Leantime/leantime-timetable/pull/25)
+  * Added quick-add ticket to timetable
+  * Added possibility to add a ticket via API
+
+* [PR-24](https://github.com/ITK-Leantime/leantime-timetable/pull/24)
+  * Hide vertical scrollbar on description field on windows
+  * Remove concept of filtering tickets
+  * Removed time logging restrictions and now merge logs if one already exists
+* [PR-23](https://github.com/ITK-Leantime/leantime-timetable/pull/23)
+  * Add linting of `*.blade.php` files
+
+## [1.2.0] - 2024-10-17
+
+* [PR-21](https://github.com/ITK-Leantime/leantime-timetable/pull/21)
+  * Add functionality and translation to button provided in #19
+* [PR-19](https://github.com/ITK-Leantime/leantime-timetable/pull/19)
+  * Update css and finetune design
+
+## [1.1.0] - 2024-09-23
+
+* [PR-20](https://github.com/ITK-Leantime/leantime-timetable/pull/20)
+  * Sync missing ticket on open
+
+* [PR-17](https://github.com/ITK-Leantime/leantime-timetable/pull/17)
+  * Added delete button to timelog modal
+  * Enable change date when editing time log
+
+* [PR-16](https://github.com/ITK-Leantime/leantime-timetable/pull/16)
+  * Assets are now versioned with query strings to [cache bust](https://www.keycdn.com/support/what-is-cache-busting#1-file-name-versioning)
+  * Better preset values when logging time
+
+## [1.0.3] - 2024-09-19
+
+* [PR-13](https://github.com/ITK-Leantime/leantime-timetable/pull/14)
+  Remove urlencode in `register.php`
+
+## [1.0.2] - 2024-09-19
+
+## [1.0.1] - 2024-09-19
+
+* [PR-12](https://github.com/ITK-Leantime/leantime-timetable/pull/12)
+  Hotfix: Fix version placeholder in asset
+
+## [1.0.0] - 2024-09-18
+
+## [0.0.1] 2024-10-13
+
+* [PR-9](https://github.com/ITK-Leantime/leantime-timetable/pull/10)
+  * Run GA with markdown runner
+  * Update create-release script
+  * Add GA that checks if documentation has been updated
+
+* [PR-8](https://github.com/ITK-Leantime/leantime-timetable/pull/8)
+  * Added compatability for Leantime 3.2
+  * Consistent naming and error handling
+
+* [PR-7](https://github.com/ITK-Leantime/leantime-timetable/pull/7)
+  * Added settings page with input for ticket cache timeout
+  * Grabbing cache timeout value in controller and passing to template
+
+* [PR-6](https://github.com/ITK-Leantime/leantime-timetable/pull/6)
+  * Added styling throughout plugin
+  * Rewritten timeTable.js into a class, overhauled methods and added doccomments
+  * Added separate apihandler used by timetable.js
+  * Modified blade template to better match design
+  * Loading apihandler frontend
+  * Added apihandler symlink to install script
+  * Added additional data as well as a get hook for jQuery ajax
+  * Added left join to project table in order to get project name with worklogs
+  * Streamlined design with figma
+
+* [PR-4](https://github.com/ITK-Leantime/leantime-timetable/pull/4)
+  * Adds get/posts in the controller. post for saving, get for getting/sorting/organizing data
+  * sql in repository, as the sql in the code base did not cover our use case
+  * Create a basic table in blade-file
+
+* [PR-3](https://github.com/ITK-Leantime/leantime-timetable/pull/5)
+  * Added build release script
+  * Added deploy script
+  * Add `4.3.3`, that is replaced by create-release script, to make [leantime load new script/css files](https://www.keycdn.com/support/what-is-cache-busting)
+  * Add `release.yml`, that builds both release and pre-releases on push tag/branch
+  * Add shellcheck to `pr.yml`
+
+* [PR-2](https://github.com/ITK-Leantime/leantime-timetable/pull/2)
+  * Setup code analysis
+  * Setup translations
+  * Setup github actions
+  * Setup linting
+  * Create a changelog
+
+* [PR-1](https://github.com/ITK-Leantime/leantime-timetable/pull/1)
+  * Foundation for further development
+
+[Unreleased]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.3.3...HEAD
+[4.3.3]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.3.2...4.3.3
+[4.3.2]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.3.1...4.3.2
+[4.3.1]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.3.0...4.3.1
+[4.3.0]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.2.1...4.3.0
+[4.2.1]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.2.0...4.2.1
+[4.2.0]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.1.7...4.2.0
+[4.1.7]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.1.6...4.1.7
+[4.1.6]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.1.5...4.1.6
+[4.1.5]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.1.4...4.1.5
+[4.1.4]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.1.3...4.1.4
+[4.1.3]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.1.2...4.1.3
+[4.1.2]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.1.1...4.1.2
+[4.1.1]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.1.0...4.1.1
+[4.1.0]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.0.1...4.1.0
+[4.0.1]: https://github.com/ITK-Leantime/leantime-timetable/compare/4.0.0...4.0.1
+[4.0.0]: https://github.com/ITK-Leantime/leantime-timetable/compare/3.5.0...4.0.0
+[3.5.0]: https://github.com/ITK-Leantime/leantime-timetable/compare/3.4.0...3.5.0
+[3.4.0]: https://github.com/ITK-Leantime/leantime-timetable/compare/3.3.0...3.4.0
+[3.3.0]: https://github.com/ITK-Leantime/leantime-timetable/compare/3.2.0...3.3.0
+[3.2.0]: https://github.com/ITK-Leantime/leantime-timetable/compare/3.1.0...3.2.0
+[3.1.0]: https://github.com/ITK-Leantime/leantime-timetable/compare/3.0.1...3.1.0
+[3.0.0]: https://github.com/ITK-Leantime/leantime-timetable/compare/2.0.2...3.0.0
+[2.0.2]: https://github.com/ITK-Leantime/leantime-timetable/compare/2.0.1...2.0.2
+[2.0.1]: https://github.com/ITK-Leantime/leantime-timetable/compare/2.0.0...2.0.1
+[2.0.0]: https://github.com/ITK-Leantime/leantime-timetable/compare/1.2.0...2.0.0
+[1.2.0]: https://github.com/ITK-Leantime/leantime-timetable/compare/1.1.0...1.2.0
+[1.1.0]: https://github.com/ITK-Leantime/leantime-timetable/compare/1.0.2...1.1.0
+[1.0.2]: https://github.com/ITK-Leantime/leantime-timetable/compare/1.0.1...1.0.2
+[1.0.1]: https://github.com/ITK-Leantime/leantime-timetable/compare/1.0.0...1.0.1
+[1.0.0]: https://github.com/ITK-Leantime/leantime-timetable/compare/0.0.1...1.0.0
+[0.0.1]: https://github.com/ITK-Leantime/leantime-timetable/releases/tag/0.0.1

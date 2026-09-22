@@ -10,7 +10,7 @@ services:
     env_file: ./.env                                        # Environment file with settings
     networks:
       - leantime-net
-    command: --character-set-server=UTF8MB4 --collation-server=UTF8MB4_unicode_ci
+    command: --character-set-server=UTF8MB4 --collation-server=UTF8MB4_unicode_ci --log-bin-trust-function-creators=1
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 30s
@@ -37,7 +37,7 @@ services:
     volumes:
       - public_userfiles:/var/www/html/public/userfiles     # Volume to store public files, logo etc
       - userfiles:/var/www/html/userfiles                   # Original volume name for compatibility
-      - plugins:/var/www/html/app/Plugins                   # Plugin storage
+      - ./plugins:/var/www/html/app/Plugins                   # Plugin storage
       - logs:/var/www/html/storage/logs                     # Log storage
     depends_on:
       leantime_db:

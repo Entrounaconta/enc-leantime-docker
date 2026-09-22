@@ -1,0 +1,177 @@
+@extends($layout)
+@section('content')
+    <script>
+        window.allTags = @json($allTags ?? []);
+        window.projectOverviewI18n = {
+            couldNotLoadView: @json(__('projectOverview.could_not_load_view')),
+            couldNotLoadMoreRows: @json(__('projectOverview.could_not_load_more_rows')),
+            failedToInsertRows: @json(__('projectOverview.failed_to_insert_rows')),
+            sessionExpired: @json(__('projectOverview.session_expired')),
+            newViewPromptName: @json(__('projectOverview.new_view_prompt_name')),
+            pillUsers: @json(__('projectOverview.pill_users')),
+            pillProjects: @json(__('projectOverview.pill_projects')),
+            pillOtherFilters: @json(__('projectOverview.pill_other_filters')),
+            pillColumns: @json(__('projectOverview.pill_columns')),
+            pillAll: @json(__('projectOverview.pill_all')),
+            selectAll: @json(__('projectOverview.select_all')),
+            deselectAll: @json(__('projectOverview.deselect_all')),
+            shareLinkCopied: @json(__('projectOverview.share_link_copied')),
+            shareLinkCopyFailed: @json(__('projectOverview.share_link_copy_failed')),
+            resultCountNone: @json(__('projectOverview.result_count_none')),
+            resultCountAll: @json(__('projectOverview.result_count_all')),
+            resultCountPartial: @json(__('projectOverview.result_count_partial')),
+        };
+    </script>
+    <?php if (isset($tpl)) {
+        echo $tpl->displayNotification();
+    } ?>
+    <!-- page header -->
+    <div class="pageheader">
+        <div class="pageicon"><span class="fas fa-fw fa-th-list"></span></div>
+        <div class="pagetitle">
+            <h1>{{ __('projectOverview.dashboard_title') }}</h1>
+        </div>
+    </div>
+
+    <div class="maincontent">
+        <div class="maincontentinner">
+            <div class="project-overview-container">
+                <input type="hidden" id="frontendDateFormat" value="{{ $frontendDateFormat }}">
+                <input type="hidden" id="selectedViewId"
+                    value="{{ $userViewsData->selectedView !== null ? urlencode($userViewsData->selectedView) : (!empty($userViewsData->userViews) ? urlencode(array_key_first($userViewsData->userViews)) : '__new') }}" />
+                <div class="filters-row">
+                    <div id="filtersContainer" class="search-and-filter"
+                        hx-get="/ProjectOverview/ProjectOverview/loadFilters/{{ $userViewsData->selectedView !== null ? urlencode($userViewsData->selectedView) : (!empty($userViewsData->userViews) ? urlencode(array_key_first($userViewsData->userViews)) : '__new') }}"
+                        hx-target="#filtersContainer" hx-trigger="load">
+                        <div id="filters-loader">
+                            <div class="spinner"></div>
+                            Loading filters...
+                        </div>
+                    </div>
+                    <button type="button" id="filtersToggle" class="filters-toggle"
+                        data-show="{{ __('projectOverview.show_filters') }}"
+                        data-hide="{{ __('projectOverview.hide_filters') }}">
+                        <span>{{ __('projectOverview.hide_filters') }}</span>
+                        <i class="fas fa-chevron-up toggle-arrow"></i>
+                    </button>
+                </div>
+
+
+                <div id="projectOverviewTabs" class="is-hidden">
+                    <ul>
+                        @foreach ($userViewsData->userViews as $key => $userView)
+                            <li data-target="{{ $key }}"
+                                {{ !empty($userView['isSubscription']) ? 'data-is-subscription=true' : '' }}
+                                {{ !empty($userView['isTransientSubscription']) ? 'data-is-transient-subscription=true' : '' }}
+                                @if (!empty($userView['sharedViewId'])) data-shared-view-id="{{ $userView['sharedViewId'] }}" @endif>
+                                <a href="#view-{{ $key }}" class="tab-link" data-view-key="{{ $key }}"
+                                    hx-get="/ProjectOverview/ProjectOverview/loadFilters/{{ urlencode($key) }}"
+                                    hx-target="#filtersContainer" hx-swap="innerHTML">
+                                    {{ str_replace('_', ' ', $userView['title'] ?? 'View') }}
+                                    @if (!empty($userView['isTransientSubscription']))
+                                        <span class="subscription-indicator"
+                                            data-tippy-content="{{ __('projectOverview.subscription_preview') }}: {{ $userView['subscribedFromName'] ?? '' }}"
+                                            data-tippy-placement="top">
+                                            <i class="fa fa-eye"></i>
+                                        </span>
+                                    @elseif (!empty($userView['isSubscription']))
+                                        <span class="subscription-indicator"
+                                            data-tippy-content="{{ __('projectOverview.subscription_indicator') }}: {{ $userView['subscribedFromName'] ?? '' }}"
+                                            data-tippy-placement="top">
+                                            <i class="fa fa-link"></i>
+                                        </span>
+                                    @endif
+                                </a>
+                                <span class="tab-context-menu">...</span>
+                            </li>
+                        @endforeach
+                        <li data-target="__new"
+                            class="new-view-tab{{ empty($userViewsData->userViews) ? ' is-only-tab' : '' }}">
+                            <a href="#view-__new" class="tab-link" data-view-key="__new"
+                                hx-get="/ProjectOverview/ProjectOverview/loadFilters/__new" hx-target="#filtersContainer"
+                                hx-swap="innerHTML">
+                                <span class="view-new-icon" aria-hidden="true">+</span>
+                                {{ __('projectOverview.new_view_tab') }}
+                            </a>
+                        </li>
+                    </ul>
+
+
+                    @foreach ($userViewsData->userViews as $key => $userView)
+                        <div id="view-{{ $key }}">
+                            @if ($userView['tickets'] !== null)
+                                @include('projectoverview::partials.projectOverviewTable', [
+                                'userView' => $userView,
+                                'statusLabels' => $userViewsData->statusLabels,
+                                'allPriorities' => $userViewsData->allPriorities,
+                                ])
+                            @else
+                                <div class="view-lazy-load" data-view-key="{{ $key }}">
+                                    <span class="view-lazy-load-spinner" aria-hidden="true"></span>
+                                    <span class="view-lazy-load-text">{{ __('projectOverview.loading_view') }}</span>
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                    <div id="view-__new">
+                        @include('projectoverview::partials.newViewHelp')
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="view-context-menu" data-mode="owned">
+            <form method="POST">
+                <input type="hidden" name="view" />
+                <input type="hidden" name="sharedViewId" value="" />
+                <div class="context-menu-header">
+                    {{ __('projectOverview.view_settings') }} <span id="contextMenuTitle"></span>
+                </div>
+                <div class="context-menu-section rename-section owner-actions">
+                    <label for="viewNameInput">{{ __('projectOverview.edit_view_name') }}</label>
+                    <div class="rename-input-group">
+                        <input name="viewName" id="viewNameInput" type="text" />
+                        <button type="submit" name="action" value="renameView" class="view-rename btn btn-default">
+                            {{ __('projectOverview.save_view') }}
+                        </button>
+                    </div>
+                </div>
+                <ul class="context-menu-actions">
+                    <li class="share-action">
+                        <button type="button" class="view-share">
+                            <i class="fa fa-share-alt"></i>
+                            {{ __('projectOverview.share_view') }}
+                        </button>
+                    </li>
+                    <li class="owner-actions">
+                        <button type="submit" name="action" value="duplicateView" class="view-duplicate">
+                            <i class="fa fa-copy"></i>
+                            {{ __('projectOverview.duplicate_view') }}
+                        </button>
+                    </li>
+                    <li class="owner-actions">
+                        <button type="submit" name="action" value="deleteView" class="view-delete"
+                            onclick="return confirm('{{ __('projectOverview.delete_view_confirm') }}')">
+                            <i class="fa fa-trash"></i>
+                            {{ __('projectOverview.delete_view') }}
+                        </button>
+                    </li>
+                    <li class="transient-actions">
+                        <button type="submit" name="action" value="pinSubscription" class="view-pin">
+                            <i class="fa fa-thumbtack"></i>
+                            {{ __('projectOverview.pin_to_my_views') }}
+                        </button>
+                    </li>
+                    <li class="transient-actions">
+                        <button type="submit" name="action" value="saveTransientAsCopy" class="view-copy">
+                            <i class="fa fa-copy"></i>
+                            {{ __('projectOverview.save_as_copy') }}
+                        </button>
+                    </li>
+                </ul>
+            </form>
+        </div>
+        <button type="button" id="scrollToTopBtn" class="scroll-to-top-btn"
+            aria-label="{{ __('projectOverview.scroll_to_top') }}" hidden>
+            <i class="fa fa-chevron-up" aria-hidden="true"></i>
+        </button>
+    @endsection

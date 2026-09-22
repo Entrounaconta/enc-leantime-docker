@@ -1,0 +1,268 @@
+<?php
+
+namespace Leantime\Plugins\ProjectOverview\Controllers;
+
+use Exception;
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Leantime\Core\Controller\Controller;
+use Leantime\Core\Controller\Frontcontroller;
+use Leantime\Core\UI\Template;
+use Leantime\Domain\Auth\Models\Roles;
+use Leantime\Domain\Auth\Services\Auth as AuthService;
+use Leantime\Plugins\ProjectOverview\Helpers\ProjectOverviewActionHandler;
+use Leantime\Plugins\ProjectOverview\Helpers\ProjectOverviewHelper;
+use Leantime\Plugins\ProjectOverview\Services\ProjectOverview as ProjectOverviewService;
+use Symfony\Component\HttpFoundation\Response;
+
+/**
+ * Class ProjectOverview
+ */
+class ProjectOverview extends Controller
+{
+    private ProjectOverviewActionHandler $actionHandler;
+
+    private ProjectOverviewHelper $projectOverviewHelper;
+
+    private ProjectOverviewService $projectOverviewService;
+
+    public const PARAM_VIEW = 'view';
+
+    /**
+     * Initialize dependencies.
+     *
+     * @return void
+     */
+    public function init(Template $tpl, ProjectOverviewActionHandler $actionHandler, ProjectOverviewHelper $projectOverviewHelper, ProjectOverviewService $projectOverviewService): void
+    {
+        $this->tpl = $tpl;
+        $this->actionHandler = $actionHandler;
+        $this->projectOverviewHelper = $projectOverviewHelper;
+        $this->projectOverviewService = $projectOverviewService;
+    }
+
+    /**
+     * Loads filters data and serves it back to the template.
+     *
+     * @param  array<string, string> $data
+     * @return Response|null
+     *
+     * @throws Exception
+     *
+     * @noinspection PhpUnused Called via HTMX
+     */
+    public function loadFilters(array $data): ?Response
+    {
+        // Get filters data.
+        $filtersData = $this->projectOverviewHelper->getProjectOverviewFiltersData($data);
+
+        // Get user views data.
+        $userViews = $this->actionHandler->getUserViewsObject();
+
+        // Assign data to template.
+        $this->tpl->assign('filtersData', $filtersData);
+        $this->tpl->assign('userViews', $userViews);
+
+        // Display template.
+        return $this->tpl->display('ProjectOverview.projectOverviewFilters');
+    }
+
+    /**
+     * @return Response
+     *
+     * @throws Exception
+     */
+    public function post(): Response
+    {
+        if (!AuthService::userIsAtLeast(Roles::$editor)) {
+            return $this->tpl->displayJson(['Error' => 'Not Authorized'], 403);
+        }
+        $redirectUrl = BASE_URL . '/ProjectOverview/ProjectOverview';
+
+        $action = $_POST['action'] ?? null;
+
+        switch ($action) {
+            case 'saveView':
+                $redirectUrl = $this->actionHandler->saveView($_POST, $redirectUrl);
+                break;
+            case 'deleteView':
+                $viewId = $_POST[self::PARAM_VIEW];
+                $this->actionHandler->deleteView($viewId);
+                break;
+            case 'renameView':
+                $viewId = $_POST[self::PARAM_VIEW];
+                $viewName = $_POST['viewName'];
+                $redirectUrl = $this->actionHandler->renameView($viewId, $viewName, $redirectUrl);
+                break;
+            case 'saveTabOrder':
+                $result = $this->actionHandler->saveTabOrder($_POST);
+                $status = $result['httpStatus'] ?? 200;
+                unset($result['httpStatus']);
+
+                return $this->tpl->displayJson($result, $status);
+            case 'saveSortOrder':
+                $viewId = $_POST[self::PARAM_VIEW] ?? '';
+                $sortBy = $_POST['sortBy'] ?? 'priority';
+                $sortDirection = $_POST['sortDirection'] ?? 'ASC';
+                $result = $this->actionHandler->saveSortOrder($viewId, $sortBy, $sortDirection);
+                $status = $result['httpStatus'] ?? 200;
+                unset($result['httpStatus']);
+
+                return $this->tpl->displayJson($result, $status);
+            case 'pinSubscription':
+                $sharedViewId = $_POST['sharedViewId'] ?? '';
+                $lookupResult = $this->actionHandler->findViewById($sharedViewId);
+                if ($lookupResult) {
+                    $newViewId = $this->actionHandler->subscribeToView($lookupResult);
+                    session()->forget('project_overview.transient_subscription');
+                    session()->flash('project_overview-flash_notification', [
+                        'message' => __('projectOverview.notification.view_subscribed'),
+                        'type' => 'success',
+                    ]);
+                    $redirectUrl .= '?' . http_build_query([self::PARAM_VIEW => $newViewId]);
+                }
+                break;
+            case 'saveTransientAsCopy':
+                $sharedViewId = $_POST['sharedViewId'] ?? '';
+                $lookupResult = $this->actionHandler->findViewById($sharedViewId);
+                if ($lookupResult) {
+                    $newViewId = $this->actionHandler->saveViewAsCopy($lookupResult);
+                    session()->forget('project_overview.transient_subscription');
+                    $redirectUrl .= '?' . http_build_query([self::PARAM_VIEW => $newViewId]);
+                }
+                break;
+            case 'duplicateView':
+                $viewId = $_POST[self::PARAM_VIEW] ?? '';
+                $newViewId = $this->actionHandler->duplicateOwnedView($viewId);
+                if ($newViewId !== null) {
+                    $redirectUrl .= '?' . http_build_query([self::PARAM_VIEW => $newViewId]);
+                }
+                break;
+        }
+
+        return Frontcontroller::redirect($redirectUrl);
+    }
+
+    /**
+     * HTMX endpoint: returns the full table HTML (page 1) for a single view using filter
+     * params from POST. Triggered by filter changes, sort changes, and the lazy-load fallback.
+     *
+     * @param  array<string, string> $data Route params (`id` = view id).
+     * @return Response|null
+     *
+     * @noinspection PhpUnused Called via fetch from JS.
+     */
+    public function loadViewTable(array $data): ?Response
+    {
+        if (!AuthService::userIsAtLeast(Roles::$readonly)) {
+            return $this->tpl->displayJson(['error' => 'Not Authorized'], 403);
+        }
+
+        $viewId = $data['id'] ?? null;
+        $tableData = $this->projectOverviewHelper->getViewTableData($_POST, $viewId);
+
+        $this->tpl->assign('userView', $tableData['userView']);
+        $this->tpl->assign('statusLabels', $tableData['statusLabels']);
+        $this->tpl->assign('allPriorities', $tableData['allPriorities']);
+
+        return $this->tpl->displayPartial('projectoverview::partials.projectOverviewTable');
+    }
+
+    /**
+     * Endpoint: returns the next batch of <tr> rows + a new sentinel (or no sentinel
+     * when last page). Triggered by the "Load more" / Retry button click in the
+     * sentinel rendered by {@see projectOverviewTableRows.blade.php}; the JS handler
+     * POSTs the current filter form together with `page` and `pageSize`.
+     *
+     * @param  array<string, string> $data Route params (`id` = view id).
+     * @return Response|null
+     *
+     * @noinspection PhpUnused Called via fetch from JS.
+     */
+    public function loadViewTableRows(array $data): ?Response
+    {
+        if (!AuthService::userIsAtLeast(Roles::$readonly)) {
+            return $this->tpl->displayJson(['error' => 'Not Authorized'], 403);
+        }
+
+        $viewId = $data['id'] ?? '';
+        $rowData = $this->projectOverviewHelper->getViewTableRows($_POST);
+
+        $nextPageUrl = $rowData['hasMore'] && $rowData['nextPage'] !== null && $viewId !== ''
+            ? '/ProjectOverview/ProjectOverview/loadViewTableRows/' . urlencode($viewId)
+            : null;
+
+        $this->tpl->assign('rows', $rowData['rows']);
+        $this->tpl->assign('columns', $rowData['columns']);
+        $this->tpl->assign('statusLabels', $rowData['statusLabels']);
+        $this->tpl->assign('allPriorities', $rowData['allPriorities']);
+        $this->tpl->assign('columnCount', max(1, count($rowData['columns'])));
+        $this->tpl->assign('nextPageUrl', $nextPageUrl);
+        $this->tpl->assign('nextPage', $rowData['nextPage']);
+        $this->tpl->assign('total', $rowData['total']);
+        $this->tpl->assign('loadedThisPage', $rowData['loadedThisPage']);
+        $this->tpl->assign('isContinuation', true);
+
+        return $this->tpl->displayPartial('projectoverview::partials.projectOverviewTableRows');
+    }
+
+    /**
+     * Gathers users view data and feeds it to the template.
+     *
+     * @return Response
+     *
+     * @throws BindingResolutionException
+     * @throws Exception
+     */
+    public function get(): Response
+    {
+        // Share-by-URL: if `?view=<id>` points at a view that isn't in the
+        // current user's list, look it up globally and stage it as a transient
+        // subscription preview. The URL stays canonical so the recipient can
+        // forward it freely — anyone they paste it to hits this same path.
+        $requestedViewId = $_GET[self::PARAM_VIEW] ?? null;
+        if ($requestedViewId !== null && $requestedViewId !== '__new') {
+            $currentUserViews = $this->actionHandler->getUserViewsObject();
+            if (!isset($currentUserViews[$requestedViewId])) {
+                $lookupResult = $this->actionHandler->findViewById($requestedViewId);
+                if ($lookupResult) {
+                    session()->put('project_overview.transient_subscription', [
+                        'ownerUserId' => $lookupResult->ownerUserId,
+                        'ownerName' => $lookupResult->ownerName,
+                        'ownerViewId' => $lookupResult->view->id,
+                    ]);
+                } else {
+                    $this->tpl->setNotification(__('projectOverview.notification.view_not_found'), 'error');
+                }
+            }
+        }
+
+        // Clean up transient subscription if user navigated away from it
+        $transientSub = session('project_overview.transient_subscription');
+        if ($transientSub) {
+            $currentViewId = $_GET[self::PARAM_VIEW] ?? null;
+            if ($currentViewId !== $transientSub['ownerViewId']) {
+                session()->forget('project_overview.transient_subscription');
+            }
+        }
+
+        // Check for flash notification and display it.
+        if (session()->has('project_overview-flash_notification')) {
+            $notification = session('project_overview-flash_notification');
+            $this->tpl->setNotification($notification['message'], $notification['type']);
+        }
+
+        // Get user views data.
+        $userViewsData = $this->projectOverviewHelper->getProjectOverviewData();
+
+        // Get unique tags for the tag search field.
+        $allTags = $this->projectOverviewService->getAllUniqueTags();
+
+        // Assign data to template.
+        $this->tpl->assign('userViewsData', $userViewsData);
+        $this->tpl->assign('allTags', $allTags);
+        $this->tpl->assign('frontendDateFormat', projectOverviewService::FRONTEND_DATE_FORMAT);
+
+        // Display template.
+        return $this->tpl->display('ProjectOverview.projectOverview');
+    }
+}

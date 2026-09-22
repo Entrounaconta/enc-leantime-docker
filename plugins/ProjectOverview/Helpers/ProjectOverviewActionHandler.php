@@ -1,0 +1,686 @@
+<?php
+
+namespace Leantime\Plugins\ProjectOverview\Helpers;
+
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Leantime\Domain\Users\Repositories\Users as UserRepository;
+use Leantime\Domain\Users\Services\Users as UserService;
+use Leantime\Plugins\ProjectOverview\DTO\SharedViewLookupResult;
+use Leantime\Plugins\ProjectOverview\DTO\UserViewDTO;
+use Leantime\Plugins\ProjectOverview\DTO\ViewDTO;
+use Leantime\Plugins\ProjectOverview\Enum\DateTypeEnum;
+
+/**
+ * Class ProjectOverviewActionHandler
+ */
+readonly class ProjectOverviewActionHandler
+{
+    private const FILTER_PREFIX_PRIORITY = 'priority_';
+
+    private const FILTER_PREFIX_STATUS = 'status_';
+
+    private const FILTER_PREFIX_CUSTOM = 'custom_';
+
+    /**
+     * Initialize dependencies.
+     *
+     * @return void
+     */
+    public function __construct(private UserService $userService, private UserRepository $userRepository)
+    {
+    }
+
+    /**
+     * Parses filter values from POST data and constructs a ViewDTO.
+     *
+     * @param  array<string, mixed> $postData      POST data containing filter values.
+     * @param  string|null          $sortBy        Optional sort column override.
+     * @param  string|null          $sortDirection Optional sort direction override.
+     * @return ViewDTO
+     */
+    public function parseFiltersFromPost(array $postData, ?string $sortBy = null, ?string $sortDirection = null): ViewDTO
+    {
+        // Drop the synthetic "__all" sentinel — it's purely a UI marker for
+        // "no filter, show everyone" and must never reach the SQL layer.
+        $users = array_values(array_filter((array) ($postData['users'] ?? []), fn ($u) => $u !== '__all'));
+        $dateType = DateTypeEnum::tryFrom($postData['dateType'] ?? '');
+        $fromDate = null;
+        $toDate = null;
+        if ($dateType === null) {
+            $dateType = DateTypeEnum::NEXT_TWO_WEEKS;
+        }
+        if ($dateType === DateTypeEnum::CUSTOM) {
+            $fromDate = $postData['fromDate'] ?? null;
+            $toDate = $postData['toDate'] ?? null;
+        }
+        // Drop the synthetic "__all" sentinel — saving an empty columns
+        // array is the canonical "show every column" state (the template
+        // pre-selects every header when selectedColumns is empty).
+        $columns = array_values(array_filter((array) ($postData['columns'] ?? []), fn ($c) => $c !== '__all'));
+        $filters = $postData['filters'] ?? [];
+        $projectFilters = $postData['projectFilters'] ?? [];
+
+        $groupedFilters = [
+            'projects' => array_values(array_filter(array_map('strval', (array) $projectFilters), 'ctype_digit')),
+            'priorities' => [],
+            'statuses' => [],
+            'custom' => [],
+        ];
+
+        foreach ($filters as $filter) {
+            if (preg_match('/^([^_]+)_(.+)/', $filter, $matches)) {
+                [, $group, $value] = $matches;
+                $filterMap = [
+                    rtrim(self::FILTER_PREFIX_PRIORITY, '_') => 'priorities',
+                    rtrim(self::FILTER_PREFIX_STATUS, '_') => 'statuses',
+                    rtrim(self::FILTER_PREFIX_CUSTOM, '_') => 'custom',
+                ];
+
+                if (isset($filterMap[$group])) {
+                    $groupedFilters[$filterMap[$group]][] = $value;
+                }
+            }
+        }
+
+        return new ViewDTO(
+            title: null,
+            users: (array) $users,
+            dateType: $dateType,
+            fromDate: $fromDate,
+            toDate: $toDate,
+            columns: $columns,
+            projectFilters: $groupedFilters['projects'],
+            priorityFilters: $groupedFilters['priorities'],
+            statusFilters: $groupedFilters['statuses'],
+            customFilters: $groupedFilters['custom'],
+            sortBy: $sortBy ?? $postData['sortBy'] ?? 'priority',
+            sortDirection: $sortDirection ?? $postData['sortDirection'] ?? 'ASC',
+            page: isset($postData['page']) ? min(ViewDTO::MAX_PAGE, max(1, (int) $postData['page'])) : null,
+            pageSize: isset($postData['pageSize']) ? min(ViewDTO::MAX_PAGE_SIZE, max(1, (int) $postData['pageSize'])) : null,
+            search: isset($postData['search']) ? trim((string) $postData['search']) : null,
+        );
+    }
+
+    /**
+     * Save the user's view.
+     *
+     * @param  array<string, mixed> $postData    POST data containing view configuration.
+     * @param  string               $redirectUrl Base redirect URL.
+     * @return string Redirect URL with view parameter.
+     */
+    public function saveView(array $postData, string $redirectUrl): string
+    {
+        $overwriteView = (bool) ($postData['overwriteView'] ?? false);
+
+        $userViewsObject = $this->getUserViewsObject();
+        $existingViewId = $postData['view'] ?? null;
+
+        // The synthetic "new" tab is not a real view; always create.
+        if ($existingViewId === '__new') {
+            $existingViewId = null;
+            $overwriteView = false;
+        }
+
+        // Check if view already exists and overwrite if requested.
+        if (!empty($existingViewId) && $overwriteView && isset($userViewsObject[$existingViewId])) {
+            $existingView = UserViewDTO::fromArray($userViewsObject[$existingViewId]);
+
+            // Prevent overwriting a subscription — force "save as new" instead
+            if ($existingView->isSubscription()) {
+                $overwriteView = false;
+            }
+        }
+
+        // Preserve sort fields from existing view when overwriting, otherwise use defaults.
+        $sortBy = 'priority';
+        $sortDirection = 'ASC';
+        if (!empty($existingViewId) && $overwriteView && isset($userViewsObject[$existingViewId])) {
+            $existingView = UserViewDTO::fromArray($userViewsObject[$existingViewId]);
+            $sortBy = $existingView->view->sortBy ?? 'priority';
+            $sortDirection = $existingView->view->sortDirection ?? 'ASC';
+        }
+
+        $viewDTO = $this->parseFiltersFromPost($postData, $sortBy, $sortDirection);
+
+        if (!empty($existingViewId) && $overwriteView && isset($userViewsObject[$existingViewId])) {
+            $existingView = UserViewDTO::fromArray($userViewsObject[$existingViewId]);
+            $userViewsObject[$existingViewId] = new UserViewDTO(
+                id: $existingView->id,
+                title: $existingView->title,
+                view: $viewDTO,
+                createdAt: $existingView->createdAt,
+                order: $existingView->order
+            );
+            $resultViewId = $existingViewId;
+
+            session()->flash('project_overview-flash_notification', [
+                'message' => __('projectOverview.notification.view_updated'),
+                'type' => 'success',
+            ]);
+        } else {
+            // Calculate the next order value (max order + 1)
+            $maxOrder = 0;
+            foreach ($userViewsObject as $view) {
+                $viewDTO_temp = UserViewDTO::fromArray($view);
+                $maxOrder = max($maxOrder, $viewDTO_temp->order);
+            }
+
+            // Determine title: explicit viewName from POST wins; otherwise subscription
+            // copy-name; otherwise default.
+            $newTitle = 'View ' . (count($userViewsObject) + 1);
+            $explicitName = trim((string) ($postData['viewName'] ?? ''));
+            if ($explicitName !== '') {
+                $newTitle = $explicitName;
+            } elseif (!empty($existingViewId) && isset($userViewsObject[$existingViewId])) {
+                $sourceView = UserViewDTO::fromArray($userViewsObject[$existingViewId]);
+                if ($sourceView->isSubscription()) {
+                    $newTitle = $sourceView->title . ' (' . __('projectOverview.copy_suffix') . ')';
+                }
+            }
+
+            // Create a new view with unique ID
+            $newViewId = uniqid('view_', true);
+            $userViewsObject[$newViewId] = new UserViewDTO(
+                id: $newViewId,
+                title: $newTitle,
+                view: $viewDTO,
+                createdAt: time(),
+                order: $maxOrder + 1
+            );
+            $resultViewId = $newViewId;
+            session()->flash('project_overview-flash_notification', [
+                'message' => __('projectOverview.notification.view_created'),
+                'type' => 'success',
+            ]);
+        }
+
+        $this->saveUserViewsObject($userViewsObject);
+
+        return $redirectUrl . (str_contains($redirectUrl, '?') ? '&' : '?') . http_build_query(['view' => $resultViewId]);
+    }
+
+    /**
+     * Deletes a view.
+     *
+     * @param  string $viewId The id of the view to be deleted.
+     * @return void
+     *
+     * @throws BindingResolutionException
+     */
+    public function deleteView(string $viewId): void
+    {
+        // Get user views object
+        $userViewsObject = $this->getUserViewsObject();
+
+        // Unset view and save.
+        if (isset($userViewsObject[$viewId])) {
+            unset($userViewsObject[$viewId]);
+            $this->saveUserViewsObject($userViewsObject);
+            session()->flash('project_overview-flash_notification', [
+                'message' => __('projectOverview.notification.view_deleted'),
+                'type' => 'success',
+            ]);
+        } else {
+            session()->flash('project_overview-flash_notification', [
+                'message' => __('projectOverview.notification.view_not_found'),
+                'type' => 'error',
+            ]);
+        }
+    }
+
+    /**
+     * Renames a view.
+     *
+     * @param  string $viewId   Id of the view to be renamed.
+     * @param  string $viewName New name of the view.
+     * @return string|false Returns the redirect URL if successful, false if the target name already exists
+     *
+     * @throws BindingResolutionException
+     */
+    public function renameView(string $viewId, string $viewName, string $redirectUrl): string|false
+    {
+        // Get user views object.
+        $userViewsObject = $this->getUserViewsObject();
+
+        // Replace spaces with underscores for better handling.
+        $viewName = str_replace(' ', '_', $viewName);
+
+        // Update the view with the new title
+        if (isset($userViewsObject[$viewId])) {
+            $existingView = UserViewDTO::fromArray($userViewsObject[$viewId]);
+
+            $userViewsObject[$viewId] = new UserViewDTO(
+                id: $existingView->id,
+                title: $viewName,
+                view: $existingView->view,
+                createdAt: $existingView->createdAt,
+                order: $existingView->order
+            );
+
+            $this->saveUserViewsObject($userViewsObject);
+
+            session()->flash('project_overview-flash_notification', [
+                'message' => __('projectOverview.notification.view_renamed'),
+                'type' => 'success',
+            ]);
+        } else {
+            session()->flash('project_overview-flash_notification', [
+                'message' => __('projectOverview.notification.view_not_found'),
+                'type' => 'error',
+            ]);
+        }
+
+        return $redirectUrl . (str_contains($redirectUrl, '?') ? '&' : '?') . http_build_query(['view' => $viewId]);
+    }
+
+    /**
+     * Find a view by its id across all users. Used to resolve a `?view=<id>`
+     * URL that points to a view owned by another user — that's the entire
+     * "share a view" flow: the recipient opens the same view URL the owner
+     * sees, and the global lookup brings the view in as a transient preview
+     * tab.
+     *
+     * @param  string $viewId The view id to search for
+     * @return SharedViewLookupResult|null The lookup result with view and owner info, or null if not found
+     */
+    public function findViewById(string $viewId): ?SharedViewLookupResult
+    {
+        $allUsers = $this->userService->getAll();
+
+        foreach ($allUsers as $user) {
+            $userViews = $this->getUserViewsObject($user['id']);
+
+            if (!isset($userViews[$viewId])) {
+                continue;
+            }
+            $view = UserViewDTO::fromArray($userViews[$viewId]);
+            if ($view->isSubscription()) {
+                // Subscriptions aren't independently shareable — they
+                // already point to someone else's view, so let the canonical
+                // owner's view ID be the share entrypoint.
+                continue;
+            }
+
+            return new SharedViewLookupResult(
+                view: $view,
+                ownerUserId: (string) $user['id'],
+                ownerName: trim($user['firstname'] . ' ' . $user['lastname']),
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * Subscribe to a shared view (live-share). Creates a subscription reference in the subscriber's views.
+     *
+     * @param  SharedViewLookupResult $lookupResult The lookup result containing the view and owner info
+     * @return string The new subscription view ID
+     */
+    public function subscribeToView(SharedViewLookupResult $lookupResult): string
+    {
+        $userViewsObject = $this->getUserViewsObject();
+
+        // Calculate the next order value (max order + 1)
+        $maxOrder = 0;
+        foreach ($userViewsObject as $view) {
+            $viewDTO = UserViewDTO::fromArray($view);
+            $maxOrder = max($maxOrder, $viewDTO->order);
+        }
+
+        // Create a subscription view with a reference to the owner's view
+        $newViewId = uniqid('view_', true);
+        $userViewsObject[$newViewId] = new UserViewDTO(
+            id: $newViewId,
+            title: $lookupResult->view->title . ' (Live)',
+            view: $lookupResult->view->view,
+            createdAt: time(),
+            order: $maxOrder + 1,
+            subscribedToUserId: $lookupResult->ownerUserId,
+            subscribedToViewId: $lookupResult->view->id,
+            subscribedFromName: $lookupResult->ownerName,
+        );
+
+        $this->saveUserViewsObject($userViewsObject);
+
+        return $newViewId;
+    }
+
+    /**
+     * Save a shared view as a static (non-subscription) copy.
+     *
+     * @param  SharedViewLookupResult $lookupResult The lookup result containing the view and owner info
+     * @return string The new view ID
+     */
+    public function saveViewAsCopy(SharedViewLookupResult $lookupResult): string
+    {
+        $userViewsObject = $this->getUserViewsObject();
+
+        $maxOrder = 0;
+        foreach ($userViewsObject as $view) {
+            $viewDTO = UserViewDTO::fromArray($view);
+            $maxOrder = max($maxOrder, $viewDTO->order);
+        }
+
+        $newViewId = uniqid('view_', true);
+        $userViewsObject[$newViewId] = new UserViewDTO(
+            id: $newViewId,
+            title: $lookupResult->view->title . ' (' . __('projectOverview.copy_suffix') . ')',
+            view: $lookupResult->view->view,
+            createdAt: time(),
+            order: $maxOrder + 1,
+        );
+
+        $this->saveUserViewsObject($userViewsObject);
+
+        session()->flash('project_overview-flash_notification', [
+            'message' => __('projectOverview.notification.view_created'),
+            'type' => 'success',
+        ]);
+
+        return $newViewId;
+    }
+
+    /**
+     * Duplicate an owned view: copies the source view's filters/columns/sort under
+     * a new id, with title "<original> (copy)". Returns the new view id, or null if
+     * the source view doesn't exist.
+     *
+     * @return string|null The new view id, or null when the source doesn't exist.
+     */
+    public function duplicateOwnedView(string $sourceViewId): ?string
+    {
+        $userViewsObject = $this->getUserViewsObject();
+
+        if (!isset($userViewsObject[$sourceViewId])) {
+            return null;
+        }
+
+        $source = UserViewDTO::fromArray($userViewsObject[$sourceViewId]);
+
+        $maxOrder = 0;
+        foreach ($userViewsObject as $view) {
+            $viewDTO = UserViewDTO::fromArray($view);
+            $maxOrder = max($maxOrder, $viewDTO->order);
+        }
+
+        $newViewId = uniqid('view_', true);
+        $userViewsObject[$newViewId] = new UserViewDTO(
+            id: $newViewId,
+            title: $source->title . ' (' . __('projectOverview.copy_suffix') . ')',
+            view: $source->view,
+            createdAt: time(),
+            order: $maxOrder + 1,
+        );
+
+        $this->saveUserViewsObject($userViewsObject);
+
+        session()->flash('project_overview-flash_notification', [
+            'message' => __('projectOverview.notification.view_created'),
+            'type' => 'success',
+        ]);
+
+        return $newViewId;
+    }
+
+    /**
+     * Resolve a subscription by fetching the owner's current view configuration.
+     *
+     * @param  UserViewDTO $subscriberView The subscriber's view containing subscription references
+     * @return UserViewDTO|null The owner's resolved view, or null if the owner deleted it
+     */
+    public function resolveSubscription(UserViewDTO $subscriberView): ?UserViewDTO
+    {
+        if (!$subscriberView->isSubscription()) {
+            return null;
+        }
+
+        $ownerViews = $this->getUserViewsObject($subscriberView->subscribedToUserId);
+
+        if (!isset($ownerViews[$subscriberView->subscribedToViewId])) {
+            return null;
+        }
+
+        return UserViewDTO::fromArray($ownerViews[$subscriberView->subscribedToViewId]);
+    }
+
+    /**
+     * Remove a subscription view from the current user's views.
+     *
+     * @param  string $viewId The ID of the subscription view to remove
+     * @return void
+     */
+    public function removeSubscription(string $viewId): void
+    {
+        $userViewsObject = $this->getUserViewsObject();
+
+        if (isset($userViewsObject[$viewId])) {
+            unset($userViewsObject[$viewId]);
+            $this->saveUserViewsObject($userViewsObject);
+        }
+    }
+
+    /**
+     * Encodes and saves the user-views object.
+     *
+     * @param  array<string, mixed> $userViewsObject Array containing view objects to be saved.
+     * @return void A base64 encoded JSON string representing the array of view objects.
+     */
+    private function saveUserViewsObject(array $userViewsObject): void
+    {
+        // Convert UserViewDTO objects to arrays
+        $viewsArray = [];
+        foreach ($userViewsObject as $key => $view) {
+            if ($view instanceof UserViewDTO) {
+                $viewsArray[$key] = $view->toArray();
+            } else {
+                $viewsArray[$key] = $view;
+            }
+        }
+
+        // JSON encode
+        $json = json_encode($viewsArray);
+        // Base64 encode to protect JSON from htmlspecialchars() in updateUserSettings
+        $encodedViewObjects = base64_encode($json);
+
+        // Save to user settings in the user table
+        $this->userService->updateUserSettings('projectoverview', 'view', $encodedViewObjects);
+    }
+
+    /**
+     * Retrieves the user views object for a given user ID.
+     *
+     * @param  ?string $userId The ID of the user whose views object is to be retrieved.
+     * @return array<string, mixed> The user's views object as an associative array. Returns an empty array if no settings exist or decoding fails.
+     */
+    public function getUserViewsObject(?string $userId = null): array
+    {
+        if (!$userId) {
+            $userId = session('userdata.id');
+        }
+        // Retrieve user settings from user table
+        $userViewsEncoded = $this->userRepository->getUserSettings($userId, 'projectoverview.view');
+
+        if (!$userViewsEncoded) {
+            return [];
+        }
+        // Base64 decode
+        $json = base64_decode($userViewsEncoded, true);
+
+        if ($json === false) {
+            return [];
+        }
+        // JSON decode
+        $userViews = json_decode($json, true) ?? [];
+
+        // Sort views by order attribute
+        uasort($userViews, function ($a, $b) {
+            $orderA = $a['order'] ?? 0;
+            $orderB = $b['order'] ?? 0;
+
+            return $orderA <=> $orderB;
+        });
+
+        return $userViews;
+    }
+
+    /**
+     * Returns the columns array to actually render in the table. An empty
+     * stored array is the canonical "show every column" state (the `__all`
+     * pill in the columns dropdown) — expand it to the full available list
+     * at render time so the table doesn't end up with zero columns.
+     *
+     * @param  array<string> $stored Stored columns array (may be empty).
+     * @return array<string>
+     */
+    public function effectiveColumns(array $stored): array
+    {
+        return empty($stored) ? $this->getAvailableColumns() : $stored;
+    }
+
+    /**
+     * Retrieves the list of available columns.
+     *
+     * @return array<string> An array of column names that are available.
+     */
+    public function getAvailableColumns(): array
+    {
+        return [
+            'headline',
+            'project',
+            'status',
+            'priority',
+            'dateToFinish',
+            'editorLastname',
+            'planHours',
+            'hourRemaining',
+            'sumHours',
+            'milestoneid',
+            'tags',
+        ];
+    }
+
+    /**
+     * Saves the sort column and direction for a specific view.
+     *
+     * @param  string $viewId        The view ID to update.
+     * @param  string $sortBy        The column name to sort by.
+     * @param  string $sortDirection The sort direction (ASC or DESC).
+     * @return array{status: string, message?: string, httpStatus?: int}
+     */
+    public function saveSortOrder(string $viewId, string $sortBy, string $sortDirection): array
+    {
+        try {
+            // Validate sort column against available columns.
+            if (!in_array($sortBy, $this->getAvailableColumns(), true)) {
+                return ['status' => 'error', 'message' => 'Invalid sort column.', 'httpStatus' => 400];
+            }
+
+            // Validate sort direction.
+            $sortDirection = strtoupper($sortDirection) === 'DESC' ? 'DESC' : 'ASC';
+
+            $userViewsObject = $this->getUserViewsObject();
+
+            if (!isset($userViewsObject[$viewId])) {
+                return ['status' => 'error', 'message' => 'View not found.', 'httpStatus' => 404];
+            }
+
+            $existingView = UserViewDTO::fromArray($userViewsObject[$viewId]);
+
+            // Rebuild ViewDTO with updated sort fields.
+            $updatedViewDTO = new ViewDTO(
+                title: $existingView->view->title,
+                users: $existingView->view->users,
+                dateType: $existingView->view->dateType,
+                fromDate: $existingView->view->fromDate,
+                toDate: $existingView->view->toDate,
+                columns: $existingView->view->columns,
+                projectFilters: $existingView->view->projectFilters,
+                priorityFilters: $existingView->view->priorityFilters,
+                statusFilters: $existingView->view->statusFilters,
+                customFilters: $existingView->view->customFilters,
+                sortBy: $sortBy,
+                sortDirection: $sortDirection,
+            );
+
+            $userViewsObject[$viewId] = new UserViewDTO(
+                id: $existingView->id,
+                title: $existingView->title,
+                view: $updatedViewDTO,
+                createdAt: $existingView->createdAt,
+                order: $existingView->order,
+                subscribedToUserId: $existingView->subscribedToUserId,
+                subscribedToViewId: $existingView->subscribedToViewId,
+                subscribedFromName: $existingView->subscribedFromName,
+            );
+
+            $this->saveUserViewsObject($userViewsObject);
+
+            return ['status' => 'success'];
+        } catch (\Exception $e) {
+            return ['status' => 'error', 'message' => $e->getMessage(), 'httpStatus' => 500];
+        }
+    }
+
+    /**
+     * Saves the updated tab order based on the given post data.
+     *
+     * @param  array<string, mixed> $postData An associative array containing the new tab order data.
+     * @return array{status: string, message?: string, debug?: string, httpStatus?: int}
+     */
+    public function saveTabOrder(array $postData): array
+    {
+        try {
+            // Get user views object.
+            $userViewsObject = $this->getUserViewsObject();
+            $newOrder = $postData['order'] ?? [];
+
+            if (empty($newOrder)) {
+                return [
+                    'status' => 'error',
+                    'message' => __('projectOverview.notification.tab_order_empty_order'),
+                    'httpStatus' => 400,
+                ];
+            }
+
+            if (empty($userViewsObject)) {
+                return [
+                    'status' => 'error',
+                    'message' => __('projectOverview.notification.tab_order_no_views'),
+                    'httpStatus' => 400,
+                ];
+            }
+
+            // Update the order attribute for each view based on its position in the newOrder array
+            foreach ($newOrder as $index => $viewKey) {
+                if (isset($userViewsObject[$viewKey])) {
+                    $existingView = UserViewDTO::fromArray($userViewsObject[$viewKey]);
+
+                    // Create a new UserViewDTO with updated order
+                    $userViewsObject[$viewKey] = new UserViewDTO(
+                        id: $existingView->id,
+                        title: $existingView->title,
+                        view: $existingView->view,
+                        createdAt: $existingView->createdAt,
+                        order: $index
+                    );
+                }
+            }
+
+            // Save updated views object
+            $this->saveUserViewsObject($userViewsObject);
+
+            return [
+                'status' => 'success',
+                'message' => __('projectOverview.notification.tab_order_saved'),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'status' => 'error',
+                'message' => __('projectOverview.notification.tab_order_error'),
+                'debug' => $e->getMessage(),
+                'httpStatus' => 500,
+            ];
+        }
+    }
+}

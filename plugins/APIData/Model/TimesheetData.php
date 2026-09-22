@@ -1,0 +1,21 @@
+<?php
+
+namespace Leantime\Plugins\APIData\Model;
+
+use Carbon\CarbonInterface;
+
+readonly class TimesheetData
+{
+    public function __construct(
+        public int $id,
+        public ?int $ticketId,
+        public ?int $projectId,
+        public ?string $description,
+        public float $hours,
+        public ?int $userId,
+        public ?string $username,
+        public ?string $kind,
+        public ?CarbonInterface $workDate = null,
+        public ?CarbonInterface $modified = null,
+    ) {}
+}
